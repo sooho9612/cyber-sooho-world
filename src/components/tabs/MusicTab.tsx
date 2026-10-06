@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Square, SkipBack, SkipForward, CornerUpLeft, Music } from 'lucide-react';
-import { supabase } from '../../supabaseClient';
-import { MusicTrack } from '../../types'; // 타입 import
+import { ASSETS, storageUrl } from '../../config/assets';
+import type { MusicTrack } from '../../types';
 
 interface MusicTabProps {
   isPlaying: boolean;
@@ -68,12 +68,12 @@ export function MusicTab({
     // [수정 2] 'old songs' 선택 시 하드코딩된 리스트 로드 (DB 오류 방지 및 즉시 재생)
     if (folderId === 'ballad') {
       const fixedTracks: MusicTrack[] = [
-        { id: 1, title: 'And July (2023 Ver.)', url: 'https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Music/And%20July%20(2023%20Ver.).m4a', folder: 'ballad' },
-        { id: 2, title: 'Clean & Dirty', url: 'https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Music/Clean%20&%20Dirty.mp3', folder: 'ballad' },
-        { id: 3, title: 'fairy of shampoo', url: 'https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Music/fairy%20of%20shampoo.mp3', folder: 'ballad' },
-        { id: 4, title: 'Happy me', url: 'https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Music/Happy%20me.mp3', folder: 'ballad' },
-        { id: 5, title: 'I Want to Be Closer to You', url: 'https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Music/I%20Want%20to%20Be%20Closer%20to%20You.mp3', folder: 'ballad' },
-        { id: 6, title: 'supernatural (winter)', url: 'https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Music/supernatural%20(winter).mp3', folder: 'ballad' },
+        { id: 1, title: 'And July (2023 Ver.)', url: storageUrl('Music/And%20July%20(2023%20Ver.).m4a'), folder: 'ballad' },
+        { id: 2, title: 'Clean & Dirty', url: storageUrl('Music/Clean%20&%20Dirty.mp3'), folder: 'ballad' },
+        { id: 3, title: 'fairy of shampoo', url: storageUrl('Music/fairy%20of%20shampoo.mp3'), folder: 'ballad' },
+        { id: 4, title: 'Happy me', url: storageUrl('Music/Happy%20me.mp3'), folder: 'ballad' },
+        { id: 5, title: 'I Want to Be Closer to You', url: storageUrl('Music/I%20Want%20to%20Be%20Closer%20to%20You.mp3'), folder: 'ballad' },
+        { id: 6, title: 'supernatural (winter)', url: storageUrl('Music/supernatural%20(winter).mp3'), folder: 'ballad' },
       ];
       setTracks(fixedTracks);
       setIsLoading(false);
@@ -139,13 +139,13 @@ export function MusicTab({
           {showVisual ? (
             <video
               ref={videoRef}
-              src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/music/WMP_visual.mp4"
+              src={ASSETS.musicVisual}
               loop muted playsInline
               style={{ width: '100%', height: '100%', objectFit: 'fill', position: 'absolute', top: 0, left: 0, zIndex: 1 }}
             />
           ) : (
             <img 
-              src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/music/mediaplayer_icon.jpg"
+              src={ASSETS.mediaPlayerIcon}
               alt="Album Art"
               style={{ width: '80px', height: '80px', objectFit: 'contain', zIndex: 1 }}
             />
@@ -203,7 +203,7 @@ export function MusicTab({
             </button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', paddingRight: '2px' }}>
-             <img src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/music/volume.png" alt="Vol" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
+             <img src={ASSETS.volumeIcon} alt="Vol" style={{ width: '16px', height: '16px', objectFit: 'contain' }} />
              <input type="range" min="0" max="1" step="0.1" value={volume} onChange={(e) => onVolumeChange(Number(e.target.value))} style={{ width: '70px', height: '10px', cursor: 'pointer' }} />
           </div>
         </div>
@@ -227,7 +227,7 @@ export function MusicTab({
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', gap: '5px' }}
                   onClick={() => handleFolderClick(folder.id)}
                 >
-                  <img src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/icon/folder.png" alt="Folder" style={{ width: '40px', height: '40px', imageRendering: 'pixelated' }} />
+                  <img src={ASSETS.folderIcon} alt="Folder" style={{ width: '40px', height: '40px', imageRendering: 'pixelated' }} />
                   <span style={{ color: 'white', fontSize: '12px', textAlign: 'center' }}>{folder.name}</span>
                 </div>
               ))}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Save, X, Edit2, Star, StarHalf } from 'lucide-react';
 import { BoardLayout } from '../shared/BoardLayout';
 import { compressImage } from '../../utils/imageCompressor';
+import { ASSETS } from '../../config/assets';
 
 function FoodForm({ onSave, onCancel, initialData }: any) {
   const [restaurant, setRestaurant] = useState(initialData?.restaurant || '');
@@ -171,7 +172,7 @@ function FoodItem({ item, onView, isSmallView }: any) {
           gap: '2px'
         }}>
           <img 
-            src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/tap/star.png" 
+            src={ASSETS.star} 
             alt="star" 
             style={{ width: '10px', height: '10px', objectFit: 'contain' }}
           />
@@ -192,7 +193,7 @@ function FoodItem({ item, onView, isSmallView }: any) {
           gap: '2px'
         }}>
           <img 
-            src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/tap/smile.png" 
+            src={ASSETS.smile} 
             alt="smile" 
             style={{ width: '10px', height: '10px', objectFit: 'contain' }}
           />

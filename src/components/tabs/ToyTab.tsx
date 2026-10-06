@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { ASSETS } from '../../config/assets';
 import { Power, CircleOff } from 'lucide-react'; // 아이콘 추가
 
 export function ToyTab() {
@@ -6,27 +7,27 @@ export function ToyTab() {
     { 
       id: 1, 
       name: '내컴퓨터', 
-      iconUrl: 'https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/toybox/mycomputer.png' 
+      iconUrl: ASSETS.toyMyComputer 
     },
     { 
       id: 2, 
       name: '인터넷 익스플로러', 
-      iconUrl: 'https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/toybox/internet.png' 
+      iconUrl: ASSETS.toyInternet 
     },
     { 
       id: 3, 
       name: 'starcraft', 
-      iconUrl: 'https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/toybox/starcraft.png' 
+      iconUrl: ASSETS.toyStarcraft 
     },
     { 
       id: 4, 
       name: '3D 핀볼', 
-      iconUrl: 'https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/toybox/pinball.png' 
+      iconUrl: ASSETS.toyPinball 
     },
     { 
       id: 5, 
       name: '휴지통', 
-      iconUrl: 'https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/toybox/recyclebin.png' 
+      iconUrl: ASSETS.toyRecycle 
     },
   ];
 
@@ -37,7 +38,7 @@ export function ToyTab() {
   const [powerState, setPowerState] = useState<'OFF' | 'BOOTING' | 'ON'>('OFF');
 
   const playClickSound = () => {
-    const sound = new Audio('https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/SoundEffect/click.mp3');
+    const sound = new Audio(ASSETS.clickSound);
     sound.volume = 0.5;
     sound.currentTime = 0;
     sound.play().catch(() => {});
@@ -160,7 +161,7 @@ export function ToyTab() {
         left: 0,
         width: '100%',
         height: '100%',
-        backgroundImage: `url('https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/bootscreen.jpg')`,
+        backgroundImage: `url(${ASSETS.bootScreen})`,
         backgroundSize: '100% 100%', // 박스에 늘이기 (Stretch)
         backgroundRepeat: 'no-repeat',
         zIndex: 20, // 아이콘보다 위, 검정화면보다 아래(혹은 위 상황에 따라)

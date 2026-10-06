@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { ASSETS } from '../../config/assets';
 
 const WINDOW_WIDTH = 'max-w-[800px]';
 const WINDOW_MIN_HEIGHT = 'min-h-[600px]';
@@ -13,7 +14,7 @@ export function WindowFrame({ children }: WindowFrameProps) {
       className="min-h-screen desktop-bg bg-cover bg-center bg-fixed md:py-10 md:px-4 flex justify-center items-start"
       style={{
         // 바깥쪽: 윈도우 바탕화면 (Bliss)
-        backgroundImage: 'url(https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/bg_008080.jpg)',
+        backgroundImage: `url(${ASSETS.bgTeal})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
@@ -38,7 +39,7 @@ export function WindowFrame({ children }: WindowFrameProps) {
         className={`window-frame ${WINDOW_WIDTH} ${WINDOW_MIN_HEIGHT} w-full bg-cover bg-center bg-no-repeat flex flex-col relative`}
         style={{
           // 안쪽: 응용 프로그램 배경화면 (Sunrising)
-          backgroundImage: 'url(https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/bg_008080.jpg)',
+          backgroundImage: `url(${ASSETS.bgTeal})`,
           
           // 테두리: Windows Classic 스타일 (4px)
           border: '4px solid',
@@ -84,7 +85,7 @@ export function WindowFrame({ children }: WindowFrameProps) {
             background: '#c0c0c0'
           }}>
             <img 
-              src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/internet01.gif" 
+              src={ASSETS.internetGif} 
               alt="net" 
               style={{ height: '12px', width: 'auto' }} 
             />

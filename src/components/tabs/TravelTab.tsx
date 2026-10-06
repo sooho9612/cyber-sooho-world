@@ -78,7 +78,7 @@ function Combobox({
 function TravelForm({ onSave, onCancel, initialData }: { 
   onSave: (data: any) => void, 
   onCancel: () => void, 
-  initialData?: TravelEntry 
+  initialData?: TravelEntry  | null
 }) {
   const [title, setTitle] = useState(initialData?.title || '');
   const [country, setCountry] = useState(initialData?.country || '');
@@ -396,7 +396,7 @@ export function TravelTab() {
 
   return (
     <div className="w-full h-full">
-      <BoardLayout 
+      <BoardLayout<TravelEntry>
         tableName="travel_entries"
         renderForm={props => <TravelForm {...props} />}
         renderDetail={props => <TravelDetail {...props} />}

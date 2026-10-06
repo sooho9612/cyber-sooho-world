@@ -7,12 +7,8 @@ interface GuestbookTabProps {
   userNickname: string;
 }
 
-interface ExtendedGuestbookEntry extends GuestbookEntry {
-  parent_id?: number | null;
-}
-
 export function GuestbookTab({ userNickname }: GuestbookTabProps) {
-  const [guestbookEntries, setGuestbookEntries] = useState<ExtendedGuestbookEntry[]>([]);
+  const [guestbookEntries, setGuestbookEntries] = useState<GuestbookEntry[]>([]);
   
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

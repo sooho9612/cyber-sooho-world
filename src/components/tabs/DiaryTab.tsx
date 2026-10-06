@@ -18,7 +18,7 @@ type BackgroundStyle = 'tile' | 'stretch';
 function DiaryForm({ onSave, onCancel, initialData }: { 
   onSave: (data: any) => void, 
   onCancel: () => void, 
-  initialData?: DiaryEntry 
+  initialData?: DiaryEntry  | null
 }) {
   const [title, setTitle] = useState(initialData?.title || '');
   const [date, setDate] = useState(initialData?.date || new Date().toISOString().slice(0, 10).replace(/-/g, '.'));
@@ -109,12 +109,10 @@ function DiaryForm({ onSave, onCancel, initialData }: {
   // 2. 붙여넣기 처리 (Ctrl+V)
   const handlePaste = async (e: React.ClipboardEvent<HTMLDivElement>, index: number) => {
     const items = e.clipboardData.items;
-    let foundImage = false;
 
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf('image') !== -1) {
         e.preventDefault(); // 기본 붙여넣기 막기
-        foundImage = true;
         const blob = items[i].getAsFile();
         if (blob) {
           const compressed = await compressImage(blob);
@@ -247,7 +245,7 @@ function DiaryForm({ onSave, onCancel, initialData }: {
         </div>
 
         <div className="bg-white p-2 border-2 border-inset border-[#dfdfdf] min-h-[150px] overflow-y-auto max-h-[600px]">
-          {gallery.map((photo, index) => {
+          {gallery.map((photo: MemoryPhoto, index: number) => {
             const isLast = index === gallery.length - 1;
             return (
               <div key={photo.id} className="bg-[#c0c0c0] border-2 border-outset border-[#dfdfdf] p-2 mb-2">
@@ -341,7 +339,7 @@ function DiaryDetail({ item, onBack, onEdit, onDelete }: { item: DiaryEntry, onB
         </div>
 
         <div className="space-y-8">
-          {gallery.length > 0 && gallery.map((photo, index) => (
+          {gallery.length > 0 && gallery.map((photo: MemoryPhoto, index: number) => (
             <div key={photo.id || index} className="flex flex-col gap-2">
               <div style={{ maxWidth: '100%', display: 'block' }}>
                 {photo.image && <img src={photo.image} alt={`Diary ${index}`} className="w-full h-auto max-h-[600px] object-contain block" />}
@@ -386,8 +384,6 @@ function DiaryItem({ item, onView, isSmallView }: { item: DiaryEntry, onView: (i
   const legacyThumb = (item as any).image_url || item.imageUrl;
   const thumbUrl = galleryThumb || legacyThumb;
   
-  const photoCount = (item.gallery?.length || 0) + (legacyThumb ? 1 : 0); 
-
   if (isSmallView) {
     return (
       <div onClick={() => onView(item)} style={{ background: 'white', border: '2px outset #dfdfdf', padding: '5px', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column', fontFamily: '"DungGeunMo", "DotMatrix", sans-serif' }}

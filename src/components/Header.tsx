@@ -1,3 +1,5 @@
+import { ASSETS } from '../config/assets';
+
 const BANNER_SCALE_PC = 100;
 const BANNER_SCALE_MOBILE = 100;
 
@@ -31,7 +33,7 @@ export function Header({ onBannerClick }: HeaderProps) {
       </style>
 
       <img
-        src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/banner_03.jpg"
+        src={ASSETS.banner}
         alt="Banner"
         className="banner-image"
         onClick={onBannerClick}

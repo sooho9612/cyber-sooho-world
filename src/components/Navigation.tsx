@@ -1,6 +1,9 @@
+import { ASSETS } from '../config/assets';
+import type { AppTab } from '../types';
+
 interface NavigationProps {
-  activeTab: 'intro' | 'home' | 'diary' | 'guestbook' | 'food' | 'music' | 'movie' | 'travel' | 'toy';
-  onTabChange: (tab: 'intro' | 'home' | 'diary' | 'guestbook' | 'food' | 'music' | 'movie' | 'travel' | 'toy') => void;
+  activeTab: AppTab;
+  onTabChange: (tab: AppTab) => void;
   isPlaying: boolean;
 }
 
@@ -69,7 +72,7 @@ export function Navigation({ activeTab, onTabChange, isPlaying }: NavigationProp
           onMouseDown={(e) => e.currentTarget.style.border = '2px inset #dfdfdf'}
           onMouseUp={(e) => e.currentTarget.style.border = activeTab === 'home' ? '2px inset #dfdfdf' : '2px outset #dfdfdf'}
         >
-          <img src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/tap/notice.png" alt="공지" style={iconStyle} />
+          <img src={ASSETS.tabNotice} alt="공지" style={iconStyle} />
           <span style={textStyle}>공지</span>
         </button>
 
@@ -88,7 +91,7 @@ export function Navigation({ activeTab, onTabChange, isPlaying }: NavigationProp
           onMouseDown={(e) => e.currentTarget.style.border = '2px inset #dfdfdf'}
           onMouseUp={(e) => e.currentTarget.style.border = activeTab === 'music' ? '2px inset #dfdfdf' : '2px outset #dfdfdf'}
         >
-          <img src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/tap/music.png" alt="음악" style={iconStyle} />
+          <img src={ASSETS.tabMusic} alt="음악" style={iconStyle} />
           <span style={textStyle}>음악</span>
         </button>
 
@@ -99,7 +102,7 @@ export function Navigation({ activeTab, onTabChange, isPlaying }: NavigationProp
           onMouseDown={(e) => e.currentTarget.style.border = '2px inset #dfdfdf'}
           onMouseUp={(e) => e.currentTarget.style.border = activeTab === 'guestbook' ? '2px inset #dfdfdf' : '2px outset #dfdfdf'}
         >
-          <img src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/tap/guestbook.png" alt="방명록" style={iconStyle} />
+          <img src={ASSETS.tabGuestbook} alt="방명록" style={iconStyle} />
           <span style={textStyle}>방명록</span>
         </button>
 
@@ -110,7 +113,7 @@ export function Navigation({ activeTab, onTabChange, isPlaying }: NavigationProp
           onMouseDown={(e) => e.currentTarget.style.border = '2px inset #dfdfdf'}
           onMouseUp={(e) => e.currentTarget.style.border = activeTab === 'diary' ? '2px inset #dfdfdf' : '2px outset #dfdfdf'}
         >
-          <img src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/tap/entries.png" alt="기록" style={iconStyle} />
+          <img src={ASSETS.tabEntries} alt="기록" style={iconStyle} />
           <span style={textStyle}>기록</span>
         </button>
 
@@ -121,7 +124,7 @@ export function Navigation({ activeTab, onTabChange, isPlaying }: NavigationProp
           onMouseDown={(e) => e.currentTarget.style.border = '2px inset #dfdfdf'}
           onMouseUp={(e) => e.currentTarget.style.border = activeTab === 'toy' ? '2px inset #dfdfdf' : '2px outset #dfdfdf'}
         >
-          <img src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/toybox/toybox.png" alt="장난감" style={iconStyle} />
+          <img src={ASSETS.tabToybox} alt="장난감" style={iconStyle} />
           <span style={textStyle}>장난감</span>
         </button>
       </div>

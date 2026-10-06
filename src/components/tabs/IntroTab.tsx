@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Edit2, Save, X, Type, Bold, Italic, Image as ImageIcon } from 'lucide-react';
+import { Edit2, Save, X, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 
 export function IntroTab() {

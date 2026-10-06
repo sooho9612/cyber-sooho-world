@@ -1,3 +1,5 @@
+import { ASSETS } from '../../config/assets';
+
 export function WindowsTitleBar() {
   return (
     <div
@@ -10,7 +12,7 @@ export function WindowsTitleBar() {
     >
       <div className="flex items-center gap-1.5 pl-0.5">
         <img
-          src="https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/favicon_01.png"
+          src={ASSETS.favicon}
           alt="Icon"
           className="w-4 h-4"
           draggable={false}

@@ -2,54 +2,54 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { LayoutGrid, List, Globe } from 'lucide-react'; // Globe 아이콘 추가
 
-interface BoardLayoutProps {
+type BoardItem = { id: string | number };
+
+interface BoardLayoutProps<T extends BoardItem = BoardItem> {
   tableName: string;
   itemsPerPage?: number;
   renderDetail: (props: {
-    item: any;
+    item: T;
     onBack: () => void;
-    onEdit: (item: any) => void;
+    onEdit: (item: T) => void;
     onDelete: (id: string) => void;
   }) => React.ReactNode;
-  renderForm: (props: { 
-    onSave: (data: any) => Promise<void>; 
-    onCancel: () => void; 
-    initialData: any | null; 
+  renderForm: (props: {
+    onSave: (data: any) => Promise<void> | void;
+    onCancel: () => void;
+    initialData?: T | null;
   }) => React.ReactNode;
-  renderItem: (props: { 
-    item: any; 
-    onView: (item: any) => void; 
-    onEdit: (item: any) => void; 
+  renderItem: (props: {
+    item: T;
+    onView: (item: T) => void;
+    onEdit: (item: T) => void;
     onDelete: (id: string) => void;
     isSmallView?: boolean;
   }) => React.ReactNode;
-  gridCols?: string; 
+  gridCols?: string;
   allowViewToggle?: boolean;
-  // [New] 필터링을 위한 Props 추가
-  filterOptions?: string[]; // 필터 버튼 목록 (예: ['Thailand', 'Vietnam'])
-  filterColumn?: string;    // 필터링할 DB 컬럼명 (예: 'country')
+  filterOptions?: string[];
+  filterColumn?: string;
 }
 
-export function BoardLayout({ 
-  tableName, 
-  itemsPerPage = 6, 
+export function BoardLayout<T extends BoardItem = BoardItem>({
+  tableName,
+  itemsPerPage = 6,
   renderDetail,
-  renderForm, 
+  renderForm,
   renderItem,
   gridCols = "grid-cols-1",
   allowViewToggle = false,
-  filterOptions = [], // 기본값 빈 배열
-  filterColumn,       // 필터 컬럼
-}: BoardLayoutProps) {
-  
-  const [items, setItems] = useState<any[]>([]);
+  filterOptions = [],
+  filterColumn,
+}: BoardLayoutProps<T>) {
+  const [items, setItems] = useState<T[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const [isWriting, setIsWriting] = useState(false);
-  const [viewingItem, setViewingItem] = useState<any | null>(null);
-  const [editingItem, setEditingItem] = useState<any | null>(null);
+  const [viewingItem, setViewingItem] = useState<T | null>(null);
+  const [editingItem, setEditingItem] = useState<T | null>(null);
 
   // [New] 현재 활성화된 필터 (null이면 All)
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
@@ -166,7 +166,7 @@ export function BoardLayout({
   };
 
   const toggleViewMode = () => {
-    setIsSmallView(prev => !prev);
+    setIsSmallView((prev: boolean) => !prev);
   };
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);

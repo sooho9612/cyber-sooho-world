@@ -13,7 +13,7 @@ type BackgroundStyle = 'tile' | 'stretch';
 function MemoryForm({ onSave, onCancel, initialData }: { 
   onSave: (data: any) => void, 
   onCancel: () => void, 
-  initialData?: MemoryEntry & { background_url?: string; background_style?: BackgroundStyle } 
+  initialData?: MemoryEntry | null
 }) {
   const [title, setTitle] = useState(initialData?.title || '');
   const [date, setDate] = useState(initialData?.date || new Date().toISOString().slice(0, 10).replace(/-/g, '.'));
@@ -217,7 +217,7 @@ function MemoryForm({ onSave, onCancel, initialData }: {
             </div>
           )}
           
-          {gallery.map((photo, index) => (
+          {gallery.map((photo: MemoryPhoto, index: number) => (
             <div key={photo.id} className="bg-[#c0c0c0] border-2 border-outset border-[#dfdfdf] p-2 mb-2">
               <div className="flex justify-between items-center mb-2 pb-1 border-b border-gray-400 border-dotted">
                 <span className="text-xs font-bold text-[#000080]">Image #{index + 1}</span>
@@ -325,7 +325,7 @@ function MemoryDetail({ item, onBack, onEdit, onDelete }: { item: MemoryEntry & 
         {/* 갤러리 렌더링 (사진 -> 캡션 순서) */}
         <div className="space-y-8">
           {gallery.length > 0 ? (
-            gallery.map((photo, index) => (
+            gallery.map((photo: MemoryPhoto, index: number) => (
               <div key={photo.id || index} className="flex flex-col gap-2">
                 <div style={{ maxWidth: '100%', display: 'block' }}>
                     <img 
