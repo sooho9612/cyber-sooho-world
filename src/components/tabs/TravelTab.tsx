@@ -327,13 +327,27 @@ function TravelDetail({ item, onBack, onEdit, onDelete }: any) {
               <div style={{ maxWidth: '100%', display: 'block' }}>
                 {photo.image && <img src={photo.image} className="w-full h-auto max-h-[600px] object-contain block shadow-lg" />}
               </div>
-              {photo.caption && <div className="text-sm text-black leading-relaxed px-2 py-1 font-bold inline-block bg-white/80 border border-gray-300 shadow-sm">└ {photo.caption}</div>}
+              {photo.caption && (
+                <div
+                  className="text-sm text-black leading-relaxed px-2 py-1 font-bold bg-white/80 border border-gray-300 shadow-sm"
+                  style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', display: 'block', maxWidth: '100%' }}
+                >
+                  └ {photo.caption}
+                </div>
+              )}
             </div>
           ))}
           {isLegacy && (
             <div className="flex flex-col gap-2">
               {item.thumbnail_url && <img src={item.thumbnail_url} className="w-full h-auto max-h-[600px] object-contain block shadow-lg" />}
-              {item.content && <div className="text-sm text-black leading-relaxed px-2 py-1 font-bold inline-block bg-white/80 border border-gray-300">└ {item.content}</div>}
+              {item.content && (
+                <div
+                  className="text-sm text-black leading-relaxed px-2 py-1 font-bold bg-white/80 border border-gray-300"
+                  style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', display: 'block', maxWidth: '100%' }}
+                >
+                  └ {item.content}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -341,7 +341,10 @@ function MemoryDetail({ item, onBack, onEdit, onDelete }: { item: MemoryEntry & 
                 </div>
                 {photo.caption && (
                   // 캡션 가독성을 위해 흰색 배경 살짝 추가
-                  <div className="text-sm text-black leading-relaxed px-2 py-1 mt-1 font-bold inline-block bg-white/80 border border-gray-300 shadow-sm" style={{ fontFamily: 'inherit' }}>
+                  <div
+                    className="text-sm text-black leading-relaxed px-2 py-1 mt-1 font-bold bg-white/80 border border-gray-300 shadow-sm"
+                    style={{ fontFamily: 'inherit', whiteSpace: 'pre-wrap', wordBreak: 'break-word', display: 'block', maxWidth: '100%' }}
+                  >
                     └ {photo.caption}
                   </div>
                 )}
