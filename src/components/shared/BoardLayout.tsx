@@ -1,12 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../supabaseClient';
-import { LayoutGrid, List, Globe } from 'lucide-react'; // Globe 아이콘 추가
+import { LayoutGrid, List, Globe } from 'lucide-react';
+import {
+  getBoardCache,
+  invalidateBoardTable,
+  isBoardCacheFresh,
+  makeBoardCacheKey,
+  setBoardCache,
+} from '../../lib/boardQueryCache';
+import { SECTION_CONTENT_MIN_HEIGHT } from './KeepAlivePanels';
 
 type BoardItem = { id: string | number };
 
 interface BoardLayoutProps<T extends BoardItem = BoardItem> {
   tableName: string;
   itemsPerPage?: number;
+  /**
+   * List query projection (PostgREST select). Use a slim column list when rows
+   * contain heavy JSON/base64 (e.g. galleries). Detail/edit always fetch `*`.
+   */
+  listSelect?: string;
+  /** Columns that must be present for detail/edit; if missing, refetch full row */
+  detailRequiredColumns?: string[];
   renderDetail: (props: {
     item: T;
     onBack: () => void;
@@ -29,11 +44,22 @@ interface BoardLayoutProps<T extends BoardItem = BoardItem> {
   allowViewToggle?: boolean;
   filterOptions?: string[];
   filterColumn?: string;
+  /** e.g. revisit-only toggle for food */
+  booleanToggleFilter?: { column: string; label: string };
+  sortOptions?: Array<{
+    id: string;
+    label: string;
+    column: string;
+    ascending: boolean;
+  }>;
+  defaultSortId?: string;
 }
 
 export function BoardLayout<T extends BoardItem = BoardItem>({
   tableName,
   itemsPerPage = 6,
+  listSelect = '*',
+  detailRequiredColumns = [],
   renderDetail,
   renderForm,
   renderItem,
@@ -41,11 +67,27 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
   allowViewToggle = false,
   filterOptions = [],
   filterColumn,
+  booleanToggleFilter,
+  sortOptions = [],
+  defaultSortId,
 }: BoardLayoutProps<T>) {
-  const [items, setItems] = useState<T[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
+  const initialSortId = defaultSortId || sortOptions[0]?.id || 'latest';
+  const initialCacheKey = makeBoardCacheKey({
+    tableName,
+    page: 1,
+    itemsPerPage,
+    activeFilter: null,
+    booleanFilterOn: false,
+    sortId: initialSortId,
+    listSelect,
+  });
+  const initialCached = getBoardCache<T>(initialCacheKey);
+
+  const [items, setItems] = useState<T[]>(() => initialCached?.items ?? []);
+  const [totalCount, setTotalCount] = useState(() => initialCached?.totalCount ?? 0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !initialCached);
+  const [isHydratingItem, setIsHydratingItem] = useState(false);
 
   const [isWriting, setIsWriting] = useState(false);
   const [viewingItem, setViewingItem] = useState<T | null>(null);
@@ -53,62 +95,141 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
 
   // [New] 현재 활성화된 필터 (null이면 All)
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [booleanFilterOn, setBooleanFilterOn] = useState(false);
+  const [sortId, setSortId] = useState(() => initialSortId);
 
+  // Default: large grid (가로 3열 등). Small/compact is opt-in via toggle.
   const [isSmallView, setIsSmallView] = useState(() => {
     if (!allowViewToggle) return false;
-    const savedMode = localStorage.getItem(`viewMode_${tableName}`);
-    return savedMode !== null ? JSON.parse(savedMode) : true;
+    const savedMode = localStorage.getItem(`viewMode_v2_${tableName}`);
+    return savedMode !== null ? JSON.parse(savedMode) : false;
   });
+
+  const fetchGen = useRef(0);
 
   useEffect(() => {
     if (allowViewToggle) {
-      localStorage.setItem(`viewMode_${tableName}`, JSON.stringify(isSmallView));
+      localStorage.setItem(`viewMode_v2_${tableName}`, JSON.stringify(isSmallView));
     }
   }, [isSmallView, allowViewToggle, tableName]);
 
-  // [수정] 필터가 변경되어도 데이터를 다시 불러와야 함
+  const activeSort =
+    sortOptions.find((s) => s.id === sortId) ||
+    sortOptions[0] || {
+      id: 'latest',
+      label: '최신순',
+      column: 'created_at',
+      ascending: false,
+    };
+
+  // [수정] 필터·정렬이 변경되어도 데이터를 다시 불러와야 함
   useEffect(() => {
     fetchData();
-  }, [currentPage, tableName, activeFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional query key deps
+  }, [currentPage, tableName, activeFilter, booleanFilterOn, sortId, itemsPerPage]);
 
-  const fetchData = async () => {
-    setIsLoading(true);
+  const needsFullRow = (item: T) => {
+    if (listSelect === '*') return false;
+    if (detailRequiredColumns.length === 0) return true;
+    return detailRequiredColumns.some((col) => (item as any)[col] === undefined);
+  };
+
+  const fetchFullItem = async (item: T): Promise<T | null> => {
+    if (!needsFullRow(item)) return item;
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .eq('id', item.id)
+      .single();
+    if (error) {
+      console.error(`Error fetching ${tableName} detail:`, error);
+      return null;
+    }
+    return data as T;
+  };
+
+  const fetchData = async (opts?: { force?: boolean }) => {
+    const force = opts?.force === true;
+    const key = makeBoardCacheKey({
+      tableName,
+      page: currentPage,
+      itemsPerPage,
+      activeFilter,
+      booleanFilterOn,
+      sortId,
+      listSelect,
+    });
+    const cached = getBoardCache<T>(key);
+
+    // SWR: paint cache immediately — no skeleton flash on tab return
+    if (cached && !force) {
+      setItems(cached.items);
+      setTotalCount(cached.totalCount);
+      setIsLoading(false);
+      if (isBoardCacheFresh(cached)) {
+        // Fresh enough: still revalidate quietly below
+      }
+    } else if (!cached) {
+      setIsLoading(true);
+    }
+
+    const gen = ++fetchGen.current;
+
     try {
-      // 1. Count Query (필터 적용)
       let countQuery = supabase
         .from(tableName)
         .select('*', { count: 'exact', head: true });
-      
+
       if (filterColumn && activeFilter) {
         countQuery = countQuery.eq(filterColumn, activeFilter);
+      }
+      if (booleanToggleFilter && booleanFilterOn) {
+        countQuery = countQuery.eq(booleanToggleFilter.column, true);
       }
 
       const { count, error: countError } = await countQuery;
       if (countError) throw countError;
-      setTotalCount(count || 0);
 
-      // 2. Data Query (필터 적용)
       const from = (currentPage - 1) * itemsPerPage;
       const to = from + itemsPerPage - 1;
 
       let dataQuery = supabase
         .from(tableName)
-        .select('*')
-        .order('created_at', { ascending: false })
+        .select(listSelect)
+        .order(activeSort.column, { ascending: activeSort.ascending })
         .range(from, to);
+
+      if (activeSort.column !== 'created_at') {
+        dataQuery = dataQuery.order('created_at', { ascending: false });
+      }
 
       if (filterColumn && activeFilter) {
         dataQuery = dataQuery.eq(filterColumn, activeFilter);
       }
+      if (booleanToggleFilter && booleanFilterOn) {
+        dataQuery = dataQuery.eq(booleanToggleFilter.column, true);
+      }
 
       const { data, error } = await dataQuery;
-
       if (error) throw error;
-      setItems(data || []);
+
+      if (gen !== fetchGen.current) return;
+
+      const nextItems = (data || []) as T[];
+      const nextCount = count || 0;
+      setItems(nextItems);
+      setTotalCount(nextCount);
+      setBoardCache(key, {
+        items: nextItems,
+        totalCount: nextCount,
+        fetchedAt: Date.now(),
+      });
     } catch (error) {
       console.error(`Error fetching ${tableName}:`, error);
     } finally {
-      setIsLoading(false);
+      if (gen === fetchGen.current) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -125,8 +246,9 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
       }
       setIsWriting(false);
       setEditingItem(null);
-      setViewingItem(null); 
-      fetchData();
+      setViewingItem(null);
+      invalidateBoardTable(tableName);
+      fetchData({ force: true });
     } catch (error) {
       console.error('Save error:', error);
       alert('저장 중 오류가 발생했습니다.');
@@ -138,21 +260,39 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
     try {
       const { error } = await supabase.from(tableName).delete().eq('id', id);
       if (error) throw error;
-      setViewingItem(null); 
-      fetchData();
+      setViewingItem(null);
+      invalidateBoardTable(tableName);
+      fetchData({ force: true });
     } catch (error) {
       console.error('Delete error:', error);
     }
   };
 
-  const handleViewClick = (item: any) => {
-    setViewingItem(item);
+  const handleViewClick = async (item: any) => {
     setIsWriting(false);
+    if (!needsFullRow(item)) {
+      setViewingItem(item);
+      return;
+    }
+    setIsHydratingItem(true);
+    const full = await fetchFullItem(item);
+    setIsHydratingItem(false);
+    if (full) setViewingItem(full);
   };
 
-  const handleEditClick = (item: any) => {
-    setEditingItem(item);
-    setIsWriting(true);
+  const handleEditClick = async (item: any) => {
+    if (!needsFullRow(item)) {
+      setEditingItem(item);
+      setIsWriting(true);
+      return;
+    }
+    setIsHydratingItem(true);
+    const full = await fetchFullItem(item);
+    setIsHydratingItem(false);
+    if (full) {
+      setEditingItem(full);
+      setIsWriting(true);
+    }
   };
 
   const handleCancel = () => {
@@ -172,6 +312,14 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
   const totalPages = Math.ceil(totalCount / itemsPerPage);
   const pageNumbers = [];
   for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
+
+  if (isHydratingItem) {
+    return (
+      <div style={{ padding: '20px', fontFamily: 'Tahoma, sans-serif', fontSize: '12px', color: '#000080' }}>
+        Loading...
+      </div>
+    );
+  }
 
   if (isWriting) {
     return (
@@ -285,6 +433,67 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
           )}
         </div>
 
+        {/* 중앙: 재방문 토글 / 정렬 (맛집 등) */}
+        {(booleanToggleFilter || sortOptions.length > 0) && (
+          <div
+            style={{
+              display: 'flex',
+              gap: '6px',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              margin: '0 8px',
+            }}
+          >
+            {booleanToggleFilter && (
+              <button
+                type="button"
+                title={booleanToggleFilter.label}
+                onClick={() => {
+                  setBooleanFilterOn((v) => !v);
+                  setCurrentPage(1);
+                }}
+                style={{
+                  height: '24px',
+                  background: booleanFilterOn ? 'white' : '#c0c0c0',
+                  border: booleanFilterOn ? '2px inset #dfdfdf' : '2px outset #dfdfdf',
+                  fontSize: '11px',
+                  fontWeight: booleanFilterOn ? 'bold' : 'normal',
+                  cursor: 'pointer',
+                  padding: '0 8px',
+                  whiteSpace: 'nowrap',
+                  color: booleanFilterOn ? '#0000cc' : '#000',
+                }}
+              >
+                {booleanToggleFilter.label}
+              </button>
+            )}
+            {sortOptions.length > 0 && (
+              <select
+                value={sortId}
+                onChange={(e) => {
+                  setSortId(e.target.value);
+                  setCurrentPage(1);
+                }}
+                style={{
+                  height: '24px',
+                  background: '#fff',
+                  border: '2px inset #dfdfdf',
+                  fontSize: '11px',
+                  fontFamily: 'Tahoma, "MS Sans Serif", sans-serif',
+                  padding: '0 4px',
+                  cursor: 'pointer',
+                }}
+              >
+                {sortOptions.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
+
         {/* 우측: 뷰 모드 토글 버튼 + 글쓰기 버튼 */}
         <div style={{ display: 'flex', gap: '6px' }}>
           {allowViewToggle && (
@@ -325,12 +534,48 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
         </div>
       </div>
 
-      {/* 2. 리스트 영역 */}
-      <div style={{ padding: '0px' }}>
+      {/* 2. 리스트 영역 — min-height로 탭 전환 시 높이 점프 완화 */}
+      <div style={{ padding: '0px', minHeight: SECTION_CONTENT_MIN_HEIGHT }}>
         {isLoading ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Loading...</div>
+          <div style={{ position: 'relative' }}>
+            <div className={`grid ${isSmallView ? 'grid-cols-2 gap-2' : `${gridCols} gap-4`}`}>
+              {Array.from({ length: itemsPerPage }, (_, i) => (
+                <div
+                  key={`skeleton-${i}`}
+                  style={{
+                    minHeight: isSmallView ? '120px' : '200px',
+                    background: '#c0c0c0',
+                    border: '2px inset #808080',
+                  }}
+                />
+              ))}
+            </div>
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#666',
+                fontSize: '12px',
+                pointerEvents: 'none',
+              }}
+            >
+              Loading...
+            </div>
+          </div>
         ) : items.length === 0 ? (
-          <div style={{ padding: '20px', textAlign: 'center', fontStyle: 'italic', color: '#666' }}>
+          <div
+            style={{
+              minHeight: SECTION_CONTENT_MIN_HEIGHT,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontStyle: 'italic',
+              color: '#666',
+            }}
+          >
             No entries found.
           </div>
         ) : (

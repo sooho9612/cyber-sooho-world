@@ -198,9 +198,13 @@ function TravelForm({ onSave, onCancel, initialData }: {
     }
 
     const cleanGallery = gallery.filter(item => item.image || item.caption.trim());
+    // List projection uses thumbnail_url + photo_count (avoid shipping full gallery on list)
+    const firstImage = cleanGallery.find((p) => p.image)?.image || null;
     onSave({ 
       title, country, region, date, 
-      gallery: cleanGallery, 
+      gallery: cleanGallery,
+      thumbnail_url: firstImage,
+      photo_count: cleanGallery.length,
       background_url: backgroundUrl, 
       background_style: backgroundStyle 
     });
@@ -342,8 +346,16 @@ function TravelDetail({ item, onBack, onEdit, onDelete }: any) {
 // 3. Item Component
 // ----------------------------------------------------------------------
 function TravelItem({ item, onView, isSmallView }: any) {
-  const thumbUrl = (item.gallery && item.gallery.length > 0) ? item.gallery[0].image : item.thumbnail_url;
-  const photoCount = item.gallery ? item.gallery.length : (item.thumbnail_url ? 1 : 0);
+  // Prefer denormalized list fields; fall back to gallery only if full row is present
+  const thumbUrl =
+    item.thumbnail_url ||
+    (item.gallery && item.gallery.length > 0 ? item.gallery[0].image : null);
+  const photoCount =
+    typeof item.photo_count === 'number'
+      ? item.photo_count
+      : item.gallery
+        ? item.gallery.length
+        : (item.thumbnail_url ? 1 : 0);
 
   return (
     <div 
@@ -398,6 +410,9 @@ export function TravelTab() {
     <div className="w-full h-full">
       <BoardLayout<TravelEntry>
         tableName="travel_entries"
+        // Slim list: gallery/background base64 can be multi-MB per row
+        listSelect="id,created_at,title,country,region,date,thumbnail_url,photo_count"
+        detailRequiredColumns={['gallery']}
         renderForm={props => <TravelForm {...props} />}
         renderDetail={props => <TravelDetail {...props} />}
         renderItem={props => <TravelItem {...props} />}

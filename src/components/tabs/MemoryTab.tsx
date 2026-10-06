@@ -268,11 +268,16 @@ function MemoryForm({ onSave, onCancel, initialData }: {
 
       <div className="flex gap-2 justify-end pt-2">
         <button 
-          onClick={() => onSave({ 
-            title, date, location, gallery, 
-            background_url: backgroundUrl, 
-            background_style: backgroundStyle 
-          })} 
+          onClick={() => {
+            const firstImage = gallery.find((p) => p.image)?.image || null;
+            onSave({ 
+              title, date, location, gallery,
+              image_url: firstImage,
+              photo_count: gallery.length,
+              background_url: backgroundUrl, 
+              background_style: backgroundStyle 
+            });
+          }} 
           className="bg-gray-300 border-2 border-outset border-gray-200 px-3 py-1 text-xs font-bold flex items-center gap-1 active:border-inset"
         >
           <Save size={12}/> Save
@@ -355,8 +360,15 @@ function MemoryDetail({ item, onBack, onEdit, onDelete }: { item: MemoryEntry & 
 // 3. Item Component (리스트 아이템)
 // ----------------------------------------------------------------------
 function MemoryItem({ item, onView, isSmallView }: { item: MemoryEntry, onView: (item: any) => void, isSmallView?: boolean }) {
+  const listThumb = (item as any).image_url as string | undefined;
   const firstPhoto = item.gallery && item.gallery.length > 0 ? item.gallery[0] : null;
-  const photoCount = item.gallery ? item.gallery.length : 0;
+  const thumbUrl = listThumb || firstPhoto?.image;
+  const photoCount =
+    typeof (item as any).photo_count === 'number'
+      ? (item as any).photo_count
+      : item.gallery
+        ? item.gallery.length
+        : (thumbUrl ? 1 : 0);
 
   if (isSmallView) {
     return (
@@ -387,8 +399,8 @@ function MemoryItem({ item, onView, isSmallView }: { item: MemoryEntry, onView: 
           justifyContent: 'center',
           position: 'relative'
         }}>
-          {firstPhoto ? (
-            <img src={firstPhoto.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          {thumbUrl ? (
+            <img src={thumbUrl} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             <ImageIcon size={24} color="#c0c0c0" />
           )}
@@ -435,8 +447,8 @@ function MemoryItem({ item, onView, isSmallView }: { item: MemoryEntry, onView: 
         background: '#808080',
         position: 'relative'
       }}>
-        {firstPhoto ? (
-          <img src={firstPhoto.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        {thumbUrl ? (
+          <img src={thumbUrl} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div className="flex flex-col items-center">
             <ImageIcon size={24} color="#c0c0c0" />
@@ -464,7 +476,9 @@ export function MemoryTab() {
   return (
     <div className="w-full h-full font-dotmatrix" style={{ fontFamily: '"DungGeunMo", "DotMatrix", sans-serif' }}>
       <BoardLayout<MemoryEntry>
-        tableName="memory_entries" 
+        tableName="memory_entries"
+        listSelect="id,created_at,title,date,location,image_url,photo_count"
+        detailRequiredColumns={['gallery']}
         renderForm={props => <MemoryForm {...props} />}
         renderDetail={props => <MemoryDetail {...props} />}
         renderItem={props => <MemoryItem {...props} />}

@@ -1,10 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Save, X } from 'lucide-react';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
 import { WindowsTitleBar } from './components/Layout/WindowsTitleBar';
 import { MenuBar } from './components/Layout/MenuBar';
 import { WindowFrame } from './components/Layout/WindowFrame';
+import { SettingsDialog } from './components/Layout/SettingsDialog';
+import { PasswordDialog } from './components/Layout/PasswordDialog';
+import { ControlPanel } from './components/Layout/ControlPanel';
+import { AutoCompressorDialog } from './components/Layout/AutoCompressorDialog';
+import { HelpAboutDialog } from './components/Layout/HelpAboutDialog';
+import { MarqueeSettingsDialog } from './components/Layout/MarqueeSettingsDialog';
+import { MarqueeBanner } from './components/MarqueeBanner';
+import { KeepAlivePanels } from './components/shared/KeepAlivePanels';
 import { IntroTab } from './components/tabs/IntroTab';
 import { HomeTab } from './components/tabs/HomeTab';
 import { DiaryTab } from './components/tabs/DiaryTab';
@@ -17,12 +25,51 @@ import { ToyTab } from './components/tabs/ToyTab';
 import { ASSETS } from './config/assets';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { useNickname } from './hooks/useNickname';
-import type { AppTab } from './types';
+import { useDesktopBackground } from './hooks/useDesktopBackground';
+import { useMarqueeSettings } from './hooks/useMarqueeSettings';
+import { loadCompressorSettings } from './utils/imageCompressor';
+import type { AppTab, DesktopBg } from './types';
+
+const ADMIN_PASSWORD = '6707';
 
 function App() {
   const audio = useAudioPlayer();
   const profile = useNickname();
+  const desktop = useDesktopBackground(profile.userNickname);
+  const marquee = useMarqueeSettings();
   const [activeTab, setActiveTab] = useState<AppTab>('intro');
+  const [showSettings, setShowSettings] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showControlPanel, setShowControlPanel] = useState(false);
+  const [showCompressor, setShowCompressor] = useState(false);
+  const [showMarqueeSettings, setShowMarqueeSettings] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+
+  useEffect(() => {
+    loadCompressorSettings();
+  }, []);
+
+  const openSettings = () => {
+    if (!profile.userNickname) {
+      alert('환경설정을 사용하려면 먼저 닉네임을 설정해주세요.');
+      profile.openProfile();
+      return;
+    }
+    setShowSettings(true);
+  };
+
+  const openControlPanelGate = () => {
+    setShowPassword(true);
+  };
+
+  const persistDesktopBg = async (bg: DesktopBg) => {
+    try {
+      await desktop.saveDesktopBg(bg);
+    } catch {
+      alert('설정 저장에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      throw new Error('save failed');
+    }
+  };
 
   return (
     <>
@@ -52,44 +99,55 @@ function App() {
         style={{ display: 'none' }}
       />
 
-      <WindowFrame>
+      <WindowFrame desktopStyle={desktop.desktopStyle}>
         <WindowsTitleBar />
-        <MenuBar onHomeClick={() => setActiveTab('intro')} onProfileClick={profile.openProfile} />
+        <MenuBar
+          onHomeClick={() => setActiveTab('intro')}
+          onProfileClick={profile.openProfile}
+          onSettingsClick={openSettings}
+          onControlPanelClick={openControlPanelGate}
+          onHelpClick={() => setShowHelp(true)}
+        />
 
         <div className="content-area" style={{ padding: '24px' }}>
           <Header onBannerClick={() => setActiveTab('intro')} />
+          <MarqueeBanner settings={marquee.settings} />
           <Navigation
             activeTab={activeTab}
             onTabChange={setActiveTab}
             isPlaying={audio.isPlaying}
           />
 
-          {activeTab === 'intro' && <IntroTab />}
-          {activeTab === 'home' && <HomeTab />}
-          {activeTab === 'diary' && <DiaryTab />}
-          {activeTab === 'food' && <FoodTab />}
-          {activeTab === 'guestbook' && <GuestbookTab userNickname={profile.userNickname} />}
-
-          {activeTab === 'music' && (
-            <MusicTab
-              isPlaying={audio.isPlaying}
-              currentTime={audio.currentTime}
-              duration={audio.duration}
-              formatTime={audio.formatTime}
-              onPlayPause={audio.togglePlayPause}
-              onStop={audio.handleStop}
-              onNext={audio.handleNext}
-              onPrev={audio.handlePrev}
-              volume={audio.volume}
-              onVolumeChange={audio.handleVolumeChange}
-              currentTrackTitle={audio.playlist[audio.currentTrackIndex]?.title || 'No Title'}
-              onSetPlaylist={audio.handleSetPlaylist}
-            />
-          )}
-
-          {activeTab === 'movie' && <MovieTab />}
-          {activeTab === 'travel' && <TravelTab />}
-          {activeTab === 'toy' && <ToyTab />}
+          <KeepAlivePanels<AppTab>
+            active={activeTab}
+            keys={['intro', 'home', 'diary', 'food', 'guestbook', 'music', 'movie', 'travel', 'toy']}
+            panels={{
+              intro: <IntroTab />,
+              home: <HomeTab />,
+              diary: <DiaryTab />,
+              food: <FoodTab />,
+              guestbook: <GuestbookTab userNickname={profile.userNickname} />,
+              music: (
+                <MusicTab
+                  isPlaying={audio.isPlaying}
+                  currentTime={audio.currentTime}
+                  duration={audio.duration}
+                  formatTime={audio.formatTime}
+                  onPlayPause={audio.togglePlayPause}
+                  onStop={audio.handleStop}
+                  onNext={audio.handleNext}
+                  onPrev={audio.handlePrev}
+                  volume={audio.volume}
+                  onVolumeChange={audio.handleVolumeChange}
+                  currentTrackTitle={audio.playlist[audio.currentTrackIndex]?.title || 'No Title'}
+                  onSetPlaylist={audio.handleSetPlaylist}
+                />
+              ),
+              movie: <MovieTab />,
+              travel: <TravelTab />,
+              toy: <ToyTab />,
+            }}
+          />
 
           {profile.showProfilePopup && (
             <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0, 0, 0, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
@@ -188,6 +246,51 @@ function App() {
             <p>Best viewed in Internet Explorer 6.0 at 800x600</p>
           </div>
         </div>
+
+        <SettingsDialog
+          open={showSettings}
+          draft={desktop.desktopBg}
+          onClose={() => setShowSettings(false)}
+          onApply={async (bg) => {
+            await persistDesktopBg(bg);
+          }}
+          onConfirm={async (bg) => {
+            await persistDesktopBg(bg);
+            setShowSettings(false);
+          }}
+        />
+
+        <PasswordDialog
+          open={showPassword}
+          title="제어판"
+          expectedPassword={ADMIN_PASSWORD}
+          onClose={() => setShowPassword(false)}
+          onSuccess={() => {
+            setShowPassword(false);
+            setShowControlPanel(true);
+          }}
+        />
+
+        <ControlPanel
+          open={showControlPanel}
+          onClose={() => setShowControlPanel(false)}
+          onOpenCompressor={() => setShowCompressor(true)}
+          onOpenMarquee={() => setShowMarqueeSettings(true)}
+        />
+
+        <AutoCompressorDialog
+          open={showCompressor}
+          onClose={() => setShowCompressor(false)}
+        />
+
+        <MarqueeSettingsDialog
+          open={showMarqueeSettings}
+          draft={marquee.settings}
+          onClose={() => setShowMarqueeSettings(false)}
+          onSave={marquee.save}
+        />
+
+        <HelpAboutDialog open={showHelp} onClose={() => setShowHelp(false)} />
       </WindowFrame>
     </>
   );

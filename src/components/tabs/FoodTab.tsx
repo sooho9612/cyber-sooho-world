@@ -299,11 +299,19 @@ export function FoodTab() {
     <div className="w-full h-full">
       <BoardLayout 
         tableName="food_entries"
+        listSelect="id,created_at,restaurant,title,date,location,price,rating,revisit,image_url"
+        detailRequiredColumns={['content']}
         renderForm={props => <FoodForm {...props} />}
         renderDetail={props => <FoodDetail {...props} />}
         renderItem={props => <FoodItem {...props} />}
         gridCols="grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
-        allowViewToggle={true} 
+        allowViewToggle={true}
+        booleanToggleFilter={{ column: 'revisit', label: '재방문의사' }}
+        sortOptions={[
+          { id: 'latest', label: '최신순', column: 'created_at', ascending: false },
+          { id: 'rating', label: '별점 높은 순', column: 'rating', ascending: false },
+        ]}
+        defaultSortId="latest"
       />
     </div>
   );

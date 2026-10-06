@@ -2,7 +2,10 @@ import { useState } from 'react';
 
 interface MenuBarProps {
   onHomeClick: () => void;
-  onProfileClick: () => void; // 프로필 팝업 여는 함수 추가
+  onProfileClick: () => void;
+  onSettingsClick: () => void;
+  onControlPanelClick: () => void;
+  onHelpClick: () => void;
 }
 
 interface MenuItem {
@@ -11,14 +14,21 @@ interface MenuItem {
   onClick?: () => void;
 }
 
-export function MenuBar({ onHomeClick, onProfileClick }: MenuBarProps) {
+export function MenuBar({
+  onHomeClick,
+  onProfileClick,
+  onSettingsClick,
+  onControlPanelClick,
+  onHelpClick,
+}: MenuBarProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const menuItems: MenuItem[] = [
-    { label: '홈', key: 'A', onClick: onHomeClick }, // (H) -> (A) 변경
-    { label: '내정보', key: 'M', onClick: onProfileClick }, // 기능 연결
-    { label: '환경설정', key: 'S' },
-    { label: '도움말', key: 'H' }, // (A) -> (H) 변경
+    { label: '홈', key: 'A', onClick: onHomeClick },
+    { label: '내정보', key: 'M', onClick: onProfileClick },
+    { label: '환경설정', key: 'S', onClick: onSettingsClick },
+    { label: '제어판', key: 'C', onClick: onControlPanelClick },
+    { label: '도움말', key: 'H', onClick: onHelpClick },
   ];
 
   return (

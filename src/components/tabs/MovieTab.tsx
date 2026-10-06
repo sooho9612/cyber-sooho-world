@@ -120,6 +120,8 @@ export function MovieTab() {
     <div className="w-full h-full">
       <BoardLayout 
         tableName="movie_entries"
+        listSelect="id,created_at,movie_title,review_line,date,rating,poster_url"
+        detailRequiredColumns={['content']}
         renderForm={props => <MovieForm {...props} />}
         renderDetail={props => <MovieDetail {...props} />}
         renderItem={props => <MovieItem {...props} />}

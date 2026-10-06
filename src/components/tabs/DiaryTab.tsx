@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Save, Edit2, X, Trash2, Image as ImageIcon, ArrowUp, ArrowDown, Upload, Layout } from 'lucide-react';
 import { BoardLayout } from '../shared/BoardLayout';
+import { KeepAlivePanels, SECTION_CONTENT_MIN_HEIGHT } from '../shared/KeepAlivePanels';
 import { compressImage } from '../../utils/imageCompressor';
 import { DiaryEntry, MemoryPhoto } from '../../types';
 
@@ -182,9 +183,12 @@ function DiaryForm({ onSave, onCancel, initialData }: {
   const handleSaveWrapper = () => {
     // 이미지와 캡션 둘 다 없는 항목 필터링
     const cleanGallery = gallery.filter(item => item.image || item.caption.trim());
+    const firstImage = cleanGallery.find((p) => p.image)?.image || null;
     onSave({ 
       title, date, location, 
-      gallery: cleanGallery, 
+      gallery: cleanGallery,
+      image_url: firstImage,
+      photo_count: cleanGallery.length,
       background_url: backgroundUrl, 
       background_style: backgroundStyle 
     });
@@ -382,7 +386,13 @@ function DiaryDetail({ item, onBack, onEdit, onDelete }: { item: DiaryEntry, onB
 function DiaryItem({ item, onView, isSmallView }: { item: DiaryEntry, onView: (item: any) => void, isSmallView?: boolean }) {
   const galleryThumb = item.gallery && item.gallery.length > 0 ? item.gallery[0].image : null;
   const legacyThumb = (item as any).image_url || item.imageUrl;
-  const thumbUrl = galleryThumb || legacyThumb;
+  const thumbUrl = legacyThumb || galleryThumb;
+  const photoCount =
+    typeof (item as any).photo_count === 'number'
+      ? (item as any).photo_count
+      : item.gallery
+        ? item.gallery.length
+        : (thumbUrl ? 1 : 0);
   
   if (isSmallView) {
     return (
@@ -390,8 +400,8 @@ function DiaryItem({ item, onView, isSmallView }: { item: DiaryEntry, onView: (i
         onMouseOver={(e) => e.currentTarget.style.border = '2px inset #dfdfdf'} onMouseOut={(e) => e.currentTarget.style.border = '2px outset #dfdfdf'}>
         <div style={{ width: '100%', aspectRatio: '1', marginBottom: '5px', border: '1px solid #000', overflow: 'hidden', background: '#808080', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
           {thumbUrl ? <img src={thumbUrl} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={24} color="#c0c0c0" />}
-          {item.gallery && item.gallery.length > 1 && (
-            <div style={{ position: 'absolute', bottom: '0', right: '0', background: '#000080', color: 'white', fontSize: '10px', padding: '0 3px', fontWeight: 'bold' }}>+{item.gallery.length - 1}</div>
+          {photoCount > 1 && (
+            <div style={{ position: 'absolute', bottom: '0', right: '0', background: '#000080', color: 'white', fontSize: '10px', padding: '0 3px', fontWeight: 'bold' }}>+{photoCount - 1}</div>
           )}
         </div>
         <div style={{ textAlign: 'center' }}>
@@ -406,8 +416,8 @@ function DiaryItem({ item, onView, isSmallView }: { item: DiaryEntry, onView: (i
       onMouseOver={(e) => e.currentTarget.style.border = '2px inset #dfdfdf'} onMouseOut={(e) => e.currentTarget.style.border = '2px outset #dfdfdf'}>
       <div style={{ width: '100%', aspectRatio: '1', marginBottom: '8px', border: '1px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', background: '#808080', position: 'relative' }}>
         {thumbUrl ? <img src={thumbUrl} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div className="flex flex-col items-center"><ImageIcon size={24} color="#c0c0c0"/><span style={{fontSize:'10px', color:'#c0c0c0', marginTop:'2px'}}>No Image</span></div>}
-        {item.gallery && item.gallery.length > 1 && (
-          <div style={{ position: 'absolute', bottom: '2px', right: '2px', background: '#000080', color: 'white', fontSize: '11px', padding: '1px 4px', fontWeight: 'bold' }}>+{item.gallery.length - 1} Photos</div>
+        {photoCount > 1 && (
+          <div style={{ position: 'absolute', bottom: '2px', right: '2px', background: '#000080', color: 'white', fontSize: '11px', padding: '1px 4px', fontWeight: 'bold' }}>+{photoCount - 1} Photos</div>
         )}
       </div>
       <div style={{ textAlign: 'center', marginBottom: 'auto' }}>
@@ -448,14 +458,29 @@ export function DiaryTab() {
         ))}
       </div>
 
-      <div style={{ background: '#c0c0c0', border: '2px outset #dfdfdf', borderTop: '2px solid white', padding: '20px', minHeight: '400px', position: 'relative', zIndex: 5 }}>
-        {activeSubTab === 'entries' && (
-          <BoardLayout<DiaryEntry> tableName="entries" renderForm={props => <DiaryForm {...props} />} renderDetail={props => <DiaryDetail {...props} />} renderItem={props => <DiaryItem {...props} />} gridCols="grid-cols-1 md:grid-cols-3" allowViewToggle={true} />
-        )}
-        {activeSubTab === 'food' && <FoodTab />}
-        {activeSubTab === 'movie' && <MovieTab />}
-        {activeSubTab === 'travel' && <TravelTab />}
-        {activeSubTab === 'memory' && <MemoryTab />}
+      <div style={{ background: '#c0c0c0', border: '2px outset #dfdfdf', borderTop: '2px solid white', padding: '20px', minHeight: SECTION_CONTENT_MIN_HEIGHT, position: 'relative', zIndex: 5 }}>
+        <KeepAlivePanels
+          active={activeSubTab}
+          keys={['entries', 'food', 'movie', 'travel', 'memory']}
+          panels={{
+            entries: (
+              <BoardLayout<DiaryEntry>
+                tableName="entries"
+                listSelect="id,created_at,title,date,location,image_url,photo_count"
+                detailRequiredColumns={['gallery']}
+                renderForm={props => <DiaryForm {...props} />}
+                renderDetail={props => <DiaryDetail {...props} />}
+                renderItem={props => <DiaryItem {...props} />}
+                gridCols="grid-cols-1 md:grid-cols-3"
+                allowViewToggle={true}
+              />
+            ),
+            food: <FoodTab />,
+            movie: <MovieTab />,
+            travel: <TravelTab />,
+            memory: <MemoryTab />,
+          }}
+        />
       </div>
     </div>
   );

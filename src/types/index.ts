@@ -12,9 +12,12 @@ export interface DiaryEntry {
   location: string;
   content: string;
   imageUrl?: string;
+  image_url?: string;
   gallery?: MemoryPhoto[];
   background_url?: string;
   background_style?: 'tile' | 'stretch';
+  photo_count?: number;
+  created_at?: string;
 }
 
 export interface FoodEntry {
@@ -75,6 +78,12 @@ export interface TravelEntry {
   thumbnail_url: string;
   body_images: string[];
   content: string;
+  gallery?: MemoryPhoto[];
+  background_url?: string;
+  background_style?: 'tile' | 'stretch';
+  /** Denormalized for list projection (avoid loading full gallery JSON) */
+  photo_count?: number;
+  created_at?: string;
 }
 
 export interface MemoryEntry {
@@ -83,8 +92,10 @@ export interface MemoryEntry {
   date: string;
   location: string;
   gallery: MemoryPhoto[];
+  image_url?: string;
   background_url?: string;
   background_style?: 'tile' | 'stretch';
+  photo_count?: number;
   created_at?: string;
 }
 
@@ -106,3 +117,58 @@ export type AppTab =
   | 'movie'
   | 'travel'
   | 'toy';
+
+/** Outer desktop background (WindowFrame .desktop-bg only) */
+export type DesktopBgColor = {
+  mode: 'color';
+  color: string;
+};
+
+export type DesktopBgImage = {
+  mode: 'image';
+  imageUrl: string;
+  imageStyle: 'tile' | 'stretch';
+};
+
+export type DesktopBg = DesktopBgColor | DesktopBgImage;
+
+/** Reserved for future inner-window background settings */
+export type WindowBg = DesktopBg | null;
+
+export interface UserSettingsRow {
+  nickname: string;
+  desktop_bg: DesktopBg;
+  window_bg: WindowBg;
+  updated_at?: string;
+}
+
+/** Site-wide image auto-compressor (Control Panel) */
+export type CompressorSettings = {
+  enabled: boolean;
+  maxEdge: number;
+  quality: number;
+};
+
+/** Site-wide marquee / 현수막 (Control Panel) */
+export type MarqueeSettings = {
+  text: string;
+  /** 1 (slow) – 10 (fast) */
+  speed: number;
+  backgroundColor: string;
+  textColor: string;
+  /** Full-sat cycling hue text animation */
+  rainbow: boolean;
+  bold: boolean;
+  underline: boolean;
+  italic: boolean;
+  /** Font size in px (approx. 10–32) */
+  fontSize: number;
+};
+
+/** homepage_settings singleton row */
+export interface HomepageSettingsRow {
+  id: number;
+  compressor: CompressorSettings;
+  marquee?: MarqueeSettings;
+  updated_at?: string;
+}
