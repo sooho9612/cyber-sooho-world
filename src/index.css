@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'ThinRounded';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2511-1@1.0/ThinDungGeunMo.woff2') format('woff2');
+  font-weight: normal;
+  font-display: swap;
+}
+
+body {
+
+margin: 0;
+  
+  /* 👇 배경 이미지 주소 (그대로 유지) */
+  background-image: url('https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/bg_008080.jpg');
+  
+  /* 👇 핵심 1: 반복하지 마라! (바둑판 해제) */
+  background-repeat: no-repeat;  
+  
+  /* 👇 핵심 2: 화면 꽉 차게 늘리기 */
+  /* cover: 비율을 유지하면서 빈틈없이 꽉 채움 (잘릴 수 있음) - 추천 👍 */
+  /* 100% 100%: 비율 무시하고 강제로 늘려서 꽉 채움 (찌그러질 수 있음) */
+  background-size: cover;     
+  
+  /* 스크롤 내려도 배경 고정 */
+  background-attachment: fixed; 
+  
+  /* 이미지를 정가운데에 위치 */
+  background-position: center;
+  
+  font-family: 'ThinRounded', sans-serif;
+}
+
+* {
+  font-family: 'ThinRounded', sans-serif;
+}
+/* 1. 기본 상태 커서 (몸통 전체) */
+body {
+  cursor: url('https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/cursor_sc_nomal.png'), auto;
+}
+
+/* 2. 클릭 상태 커서 (버튼, 링크, 입력창 위에 올렸을 때) */
+a, button, input, select, textarea, [role="button"] {
+  cursor: url('https://utwyxpotbbfmxmjiklsb.supabase.co/storage/v1/object/public/Image/cursor_sc_select.png'), pointer;
+}
+
+/* 3. 픽셀 아트 이미지 렌더링 (모든 이미지에 적용) */
+img {
+  image-rendering: pixelated;       /* Chrome, Edge, Opera */
+  image-rendering: -moz-crisp-edges; /* Firefox */
+  image-rendering: crisp-edges;      /* Standard */
+}
