@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { classicAlert } from '../lib/messageBox';
+import { useLocale } from '../i18n/LocaleContext';
 
 const STORAGE_KEY = 'user_nickname';
 
 export function useNickname() {
+  const { t } = useLocale();
   const [userNickname, setUserNickname] = useState(() => localStorage.getItem(STORAGE_KEY) ?? '');
   const [tempNickname, setTempNickname] = useState('');
   const [showProfilePopup, setShowProfilePopup] = useState(() => !localStorage.getItem(STORAGE_KEY));
@@ -14,14 +17,14 @@ export function useNickname() {
 
   const saveProfile = () => {
     if (!tempNickname.trim()) {
-      alert('닉네임을 입력해주세요!');
+      void classicAlert(t('msg.needNickname'), t('common.alert'), 'warning');
       return;
     }
     const finalNickname = tempNickname.trim();
     setUserNickname(finalNickname);
     localStorage.setItem(STORAGE_KEY, finalNickname);
     setShowProfilePopup(false);
-    alert(`반가워요, ${finalNickname}님! 설정이 저장되었습니다.`);
+    void classicAlert(t('msg.nicknameHello', { name: finalNickname }));
   };
 
   const closeProfile = () => setShowProfilePopup(false);

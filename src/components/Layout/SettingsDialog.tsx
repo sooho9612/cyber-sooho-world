@@ -4,6 +4,7 @@ import { storageUrl } from '../../config/assets';
 import { supabase } from '../../supabaseClient';
 import type { DesktopBg } from '../../types';
 import { ColorPickerDialog } from './ColorPickerDialog';
+import { useLocale } from '../../i18n/LocaleContext';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -63,6 +64,7 @@ export function SettingsDialog({
   onApply,
   onConfirm,
 }: SettingsDialogProps) {
+  const { t } = useLocale();
   const [local, setLocal] = useState<DesktopBg>(draft);
   const [wallpapers, setWallpapers] = useState<WallpaperOption[]>(USER_WALLPAPER_FALLBACKS);
   const [busy, setBusy] = useState(false);
@@ -168,7 +170,7 @@ export function SettingsDialog({
     >
       <div
         role="dialog"
-        aria-label="디스플레이 속성"
+        aria-label={t('settings.title')}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '440px',
@@ -193,10 +195,10 @@ export function SettingsDialog({
             userSelect: 'none',
           }}
         >
-          <span>디스플레이 속성</span>
+          <span>{t('settings.title')}</span>
           <button
             type="button"
-            aria-label="닫기"
+            aria-label={t('common.close')}
             onClick={onClose}
             style={{
               background: '#c0c0c0',
@@ -234,7 +236,7 @@ export function SettingsDialog({
                 zIndex: 1,
               }}
             >
-              배경
+              {t('settings.background')}
             </div>
           </div>
 
@@ -281,12 +283,12 @@ export function SettingsDialog({
               marginBottom: '10px',
             }}
           >
-            <legend style={{ fontSize: '12px', padding: '0 4px' }}>단색</legend>
+            <legend style={{ fontSize: '12px', padding: '0 4px' }}>{t('settings.solid')}</legend>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
               <label style={{ fontSize: '12px' }}>색:</label>
               <button
                 type="button"
-                title="색 선택"
+                title={t('settings.pickColor')}
                 onClick={() => setShowColorPicker(true)}
                 style={{
                   width: '40px',
@@ -298,7 +300,7 @@ export function SettingsDialog({
                 }}
               />
               <span style={{ fontSize: '11px', color: '#404040' }}>
-                {local.mode === 'color' ? local.color : '(그림 선택 중)'}
+                {local.mode === 'color' ? local.color : t('settings.pictureSelecting')}
               </span>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', alignItems: 'center' }}>
@@ -323,8 +325,8 @@ export function SettingsDialog({
               ))}
               <button
                 type="button"
-                title="사용자 지정 색"
-                aria-label="사용자 지정 색"
+                title={t('settings.customColor')}
+                aria-label={t('settings.customColor')}
                 onClick={() => setShowColorPicker(true)}
                 style={{
                   width: '18px',
@@ -346,7 +348,7 @@ export function SettingsDialog({
               marginBottom: '12px',
             }}
           >
-            <legend style={{ fontSize: '12px', padding: '0 4px' }}>그림</legend>
+            <legend style={{ fontSize: '12px', padding: '0 4px' }}>{t('settings.picture')}</legend>
             <div
               style={{
                 display: 'grid',
@@ -408,7 +410,7 @@ export function SettingsDialog({
                     }
                   }}
                 />
-                바둑판식(타일)
+                {t('settings.tile')}
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <input
@@ -422,7 +424,7 @@ export function SettingsDialog({
                     }
                   }}
                 />
-                늘이기(스트레치)
+                {t('settings.stretch')}
               </label>
             </div>
           </fieldset>
@@ -440,7 +442,7 @@ export function SettingsDialog({
                 e.currentTarget.style.border = '2px outset #dfdfdf';
               }}
             >
-              확인
+              {t('common.ok')}
             </button>
             <button
               type="button"
@@ -454,7 +456,7 @@ export function SettingsDialog({
                 e.currentTarget.style.border = '2px outset #dfdfdf';
               }}
             >
-              취소
+              {t('common.cancel')}
             </button>
             <button
               type="button"
@@ -468,7 +470,7 @@ export function SettingsDialog({
                 e.currentTarget.style.border = '2px outset #dfdfdf';
               }}
             >
-              적용
+              {t('settings.apply')}
             </button>
           </div>
         </div>

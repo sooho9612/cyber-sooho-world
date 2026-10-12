@@ -1,8 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Edit2, Save, X, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
+import { useAuthContext } from '../../context/AuthContext';
+import { classicAlert, classicPrompt } from '../../lib/messageBox';
+import { useLocale } from '../../i18n/LocaleContext';
 
 export function IntroTab() {
+  const { t } = useLocale();
+  const auth = useAuthContext();
   const [content, setContent] = useState<string>(''); // 에디터 내부 컨텐츠 (텍스트 등)
   const [bgUrl, setBgUrl] = useState<string>('');     // 배경 이미지 URL
   const [isEditing, setIsEditing] = useState(false);
@@ -21,9 +26,9 @@ export function IntroTab() {
 
   // 2. 글자 크기 3단계
   const sizes = [
-    { label: '소', value: '2' },
-    { label: '중', value: '3' },
-    { label: '대', value: '5' },
+    { label: t('intro.sizeS'), value: '2' },
+    { label: t('intro.sizeM'), value: '3' },
+    { label: t('intro.sizeL'), value: '5' },
   ];
 
   useEffect(() => {
@@ -111,27 +116,26 @@ export function IntroTab() {
       if (error) throw error;
       
       setIsEditing(false);
-      alert('✓ 자기소개가 저장되었습니다!');
+      void classicAlert(t('msg.introSaved'));
     } catch (error) {
       console.error('Error saving intro:', error);
-      alert('저장에 실패했습니다.');
+      void classicAlert(t('msg.saveFailed'), t('common.alert'), 'error');
     }
   };
 
   // --- Editor Logic ---
   const handleEditClick = () => {
-    const password = prompt('관리자 비밀번호를 입력하세요:');
-    if (password === '1223') {
-      setIsEditing(true);
-      setTimeout(() => {
-        if (editorRef.current) {
-          editorRef.current.innerHTML = content;
-          editorRef.current.focus();
-        }
-      }, 0);
-    } else if (password !== null) {
-      alert('비밀번호가 틀렸습니다.');
+    if (!auth.isOwner) {
+      void classicAlert(t('msg.ownerEditOnly'), t('common.alert'), 'warning');
+      return;
     }
+    setIsEditing(true);
+    setTimeout(() => {
+      if (editorRef.current) {
+        editorRef.current.innerHTML = content;
+        editorRef.current.focus();
+      }
+    }, 0);
   };
 
   const execCmd = (command: string, value?: string) => {
@@ -140,8 +144,8 @@ export function IntroTab() {
   };
 
   // 배경 이미지 넣기
-  const handleAddBackground = () => {
-    const url = prompt('배경으로 사용할 이미지 주소(URL)를 입력하세요:', 'https://');
+  const handleAddBackground = async () => {
+    const url = await classicPrompt(t('msg.bgPrompt'), 'https://');
     if (url) {
         setBgUrl(url);
     } else if (url === '') {
@@ -220,7 +224,7 @@ export function IntroTab() {
           {/* 배경 이미지 버튼 */}
           <button 
             onClick={handleAddBackground} 
-            title="배경 이미지 설정"
+            title={t('intro.bg')}
             style={{ 
                 background: '#c0c0c0', 
                 border: '1px outset #fff', 
@@ -270,8 +274,8 @@ export function IntroTab() {
         suppressContentEditableWarning={true}
       />
 
-      {/* 3. 수정 버튼 (보기 모드일 때만 우측 상단에 표시) */}
-      {!isEditing && (
+      {/* 3. 수정 버튼 (owner + 보기 모드) */}
+      {!isEditing && auth.isOwner && (
         <button
           onClick={handleEditClick}
           style={{
@@ -287,7 +291,7 @@ export function IntroTab() {
           }}
           onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
           onMouseLeave={(e) => e.currentTarget.style.opacity = '0.5'}
-          title="페이지 수정 (관리자)"
+          title={t('intro.edit')}
         >
           <Edit2 size={16} color="#000080" />
         </button>

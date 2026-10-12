@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { X } from 'lucide-react';
+import { useLocale } from '../../i18n/LocaleContext';
 
 interface ControlPanelProps {
   open: boolean;
@@ -8,28 +9,29 @@ interface ControlPanelProps {
   onOpenMarquee: () => void;
 }
 
-const items = [
-  {
-    id: 'compressor',
-    label: 'Auto Compressor',
-    icon: `${import.meta.env.BASE_URL}icons/compressor.ico`,
-  },
-  {
-    id: 'marquee',
-    label: '현수막',
-    icon: `${import.meta.env.BASE_URL}icons/marquee.ico`,
-  },
-] as const;
-
 export function ControlPanel({
   open,
   onClose,
   onOpenCompressor,
   onOpenMarquee,
 }: ControlPanelProps) {
+  const { t } = useLocale();
   const [selected, setSelected] = useState<string | null>(null);
 
   if (!open) return null;
+
+  const items = [
+    {
+      id: 'compressor',
+      label: t('panel.compressor'),
+      icon: `${import.meta.env.BASE_URL}icons/compressor.ico`,
+    },
+    {
+      id: 'marquee',
+      label: t('panel.marquee'),
+      icon: `${import.meta.env.BASE_URL}icons/marquee.ico`,
+    },
+  ] as const;
 
   const openItem = (id: string) => {
     if (id === 'compressor') onOpenCompressor();
@@ -65,7 +67,7 @@ export function ControlPanel({
     >
       <div
         role="dialog"
-        aria-label="제어판"
+        aria-label={t('panel.control')}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '420px',
@@ -94,10 +96,10 @@ export function ControlPanel({
             userSelect: 'none',
           }}
         >
-          <span>제어판</span>
+          <span>{t('panel.control')}</span>
           <button
             type="button"
-            aria-label="닫기"
+            aria-label={t('common.close')}
             onClick={onClose}
             style={{
               background: '#c0c0c0',

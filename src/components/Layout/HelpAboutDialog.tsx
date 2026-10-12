@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { ASSETS } from '../../config/assets';
+import { useLocale } from '../../i18n/LocaleContext';
 
 interface HelpAboutDialogProps {
   open: boolean;
@@ -17,6 +18,7 @@ const chromeBtn: CSSProperties = {
 };
 
 export function HelpAboutDialog({ open, onClose }: HelpAboutDialogProps) {
+  const { t } = useLocale();
   if (!open) return null;
 
   return (
@@ -34,7 +36,7 @@ export function HelpAboutDialog({ open, onClose }: HelpAboutDialogProps) {
     >
       <div
         role="alertdialog"
-        aria-label="도움말"
+        aria-label={t('help.title')}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '320px',
@@ -88,7 +90,7 @@ export function HelpAboutDialog({ open, onClose }: HelpAboutDialogProps) {
               e.currentTarget.style.border = '2px outset #dfdfdf';
             }}
           >
-            확인
+            {t('common.ok')}
           </button>
         </div>
       </div>

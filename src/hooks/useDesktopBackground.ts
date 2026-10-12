@@ -46,12 +46,12 @@ export function desktopBgToStyle(bg: DesktopBg): CSSProperties {
   };
 }
 
-export function useDesktopBackground(nickname: string) {
+export function useDesktopBackground(userId: string | null | undefined, nicknameHint?: string) {
   const [desktopBg, setDesktopBg] = useState<DesktopBg>(DEFAULT_DESKTOP_BG);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!nickname) {
+    if (!userId) {
       setDesktopBg(DEFAULT_DESKTOP_BG);
       return;
     }
@@ -61,11 +61,30 @@ export function useDesktopBackground(nickname: string) {
 
     (async () => {
       try {
-        const { data, error } = await supabase
+        let { data, error } = await supabase
           .from('user_settings')
           .select('desktop_bg')
-          .eq('nickname', nickname)
+          .eq('user_id', userId)
           .maybeSingle();
+
+        // Legacy fallback: nickname-linked row (read once if user_id miss)
+        if (!data && nicknameHint) {
+          const legacy = await supabase
+            .from('user_settings')
+            .select('desktop_bg, user_id')
+            .ilike('nickname', nicknameHint)
+            .maybeSingle();
+          if (!legacy.error && legacy.data) {
+            data = legacy.data;
+            if (!legacy.data.user_id) {
+              await supabase
+                .from('user_settings')
+                .update({ user_id: userId })
+                .ilike('nickname', nicknameHint)
+                .is('user_id', null);
+            }
+          }
+        }
 
         if (cancelled) return;
         if (error) {
@@ -89,32 +108,52 @@ export function useDesktopBackground(nickname: string) {
     return () => {
       cancelled = true;
     };
-  }, [nickname]);
+  }, [userId, nicknameHint]);
 
   const saveDesktopBg = useCallback(
     async (next: DesktopBg) => {
-      if (!nickname) {
-        throw new Error('닉네임이 필요합니다.');
+      if (!userId) {
+        throw new Error('로그인이 필요합니다.');
       }
+
+      const { data: existing } = await supabase
+        .from('user_settings')
+        .select('nickname')
+        .eq('user_id', userId)
+        .maybeSingle();
 
       const { error } = await supabase.from('user_settings').upsert(
         {
-          nickname,
+          user_id: userId,
+          nickname: existing?.nickname || nicknameHint || userId.slice(0, 8),
           desktop_bg: next,
           window_bg: null,
           updated_at: new Date().toISOString(),
         },
-        { onConflict: 'nickname' }
+        { onConflict: 'user_id' }
       );
 
       if (error) {
-        console.error('Failed to save desktop background:', error);
-        throw error;
+        // Fallback if unique on nickname still required without user_id conflict target
+        const retry = await supabase.from('user_settings').upsert(
+          {
+            nickname: nicknameHint || userId.slice(0, 8),
+            user_id: userId,
+            desktop_bg: next,
+            window_bg: null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'nickname' }
+        );
+        if (retry.error) {
+          console.error('Failed to save desktop background:', retry.error);
+          throw retry.error;
+        }
       }
 
       setDesktopBg(next);
     },
-    [nickname]
+    [userId, nicknameHint]
   );
 
   return {

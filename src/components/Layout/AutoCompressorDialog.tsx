@@ -1,5 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { X } from 'lucide-react';
+import { classicAlert } from '../../lib/messageBox';
+import { useLocale } from '../../i18n/LocaleContext';
 import {
   DEFAULT_COMPRESSOR,
   loadCompressorSettings,
@@ -32,6 +34,7 @@ const fieldStyle: CSSProperties = {
 };
 
 export function AutoCompressorDialog({ open, onClose }: AutoCompressorDialogProps) {
+  const { t } = useLocale();
   const [draft, setDraft] = useState<CompressorSettings>(DEFAULT_COMPRESSOR);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -62,7 +65,7 @@ export function AutoCompressorDialog({ open, onClose }: AutoCompressorDialogProp
       await saveCompressorSettings(draft);
       onClose();
     } catch {
-      alert('저장에 실패했습니다.');
+      void classicAlert(t('msg.saveFailed'), t('common.alert'), 'error');
     } finally {
       setBusy(false);
     }
@@ -111,7 +114,7 @@ export function AutoCompressorDialog({ open, onClose }: AutoCompressorDialogProp
           <span>Auto Compressor 속성</span>
           <button
             type="button"
-            aria-label="닫기"
+            aria-label={t('common.close')}
             onClick={onClose}
             style={{
               background: '#c0c0c0',

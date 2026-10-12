@@ -39,6 +39,7 @@ export interface GuestbookEntry {
   nickname: string;
   message: string;
   parent_id?: number | null;
+  user_id?: string | null;
 }
 
 export interface HomePost {
@@ -55,6 +56,7 @@ export interface HomeComment {
   post_id: number;
   nickname: string;
   content: string;
+  user_id?: string | null;
 }
 
 export interface MovieEntry {
@@ -137,6 +139,7 @@ export type WindowBg = DesktopBg | null;
 
 export interface UserSettingsRow {
   nickname: string;
+  user_id?: string | null;
   desktop_bg: DesktopBg;
   window_bg: WindowBg;
   updated_at?: string;

@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { ASSETS } from '../../config/assets';
 import { Power, CircleOff } from 'lucide-react'; // 아이콘 추가
+import { classicAlert } from '../../lib/messageBox';
+import { useLocale } from '../../i18n/LocaleContext';
 
 export function ToyTab() {
+  const { t } = useLocale();
   const icons = [
     { 
       id: 1, 
-      name: '내컴퓨터', 
+      name: t('toy.myComputer'), 
       iconUrl: ASSETS.toyMyComputer 
     },
     { 
       id: 2, 
-      name: '인터넷 익스플로러', 
+      name: t('toy.ie'), 
       iconUrl: ASSETS.toyInternet 
     },
     { 
@@ -26,7 +29,7 @@ export function ToyTab() {
     },
     { 
       id: 5, 
-      name: '휴지통', 
+      name: t('toy.recycle'), 
       iconUrl: ASSETS.toyRecycle 
     },
   ];
@@ -50,17 +53,17 @@ export function ToyTab() {
     setSelectedIconId(id);
   };
 
-  const handleIconDoubleClick = (name: string) => {
+  const handleIconDoubleClick = (id: number, name: string) => {
     if (powerState !== 'ON') return;
     playClickSound();
-    if (name === '3D 핀볼') {
+    if (id === 4) {
       window.open(
-        'https://pinball.alula.me/', 
-        'PinballGame', 
+        'https://pinball.alula.me/',
+        'PinballGame',
         'width=600,height=480,resizable=yes,scrollbars=no,status=no,toolbar=no'
       );
     } else {
-      alert(`'${name}' 실행! (준비 중...)`);
+      void classicAlert(t('msg.toyReady', { name }));
     }
   };
 
@@ -114,7 +117,7 @@ export function ToyTab() {
           }}
           onDoubleClick={(e) => {
             e.stopPropagation();
-            handleIconDoubleClick(icon.name);
+            handleIconDoubleClick(icon.id, icon.name);
           }}
           style={{
             width: '70px',

@@ -4,6 +4,8 @@ import { DEFAULT_MARQUEE } from '../../hooks/useMarqueeSettings';
 import type { MarqueeSettings } from '../../types';
 import { ClassicSlider } from './ClassicSlider';
 import { ColorPickerDialog } from './ColorPickerDialog';
+import { classicAlert } from '../../lib/messageBox';
+import { useLocale } from '../../i18n/LocaleContext';
 
 interface MarqueeSettingsDialogProps {
   open: boolean;
@@ -30,6 +32,7 @@ export function MarqueeSettingsDialog({
   onClose,
   onSave,
 }: MarqueeSettingsDialogProps) {
+  const { t } = useLocale();
   const [local, setLocal] = useState<MarqueeSettings>(draft);
   const [busy, setBusy] = useState(false);
   const [colorTarget, setColorTarget] = useState<ColorTarget>(null);
@@ -49,7 +52,7 @@ export function MarqueeSettingsDialog({
       await onSave(local);
       onClose();
     } catch {
-      alert('저장에 실패했습니다.');
+      void classicAlert(t('msg.saveFailed'), t('common.alert'), 'error');
     } finally {
       setBusy(false);
     }
@@ -105,7 +108,7 @@ export function MarqueeSettingsDialog({
     >
       <div
         role="dialog"
-        aria-label="현수막 속성"
+        aria-label={t('marquee.title')}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '360px',
@@ -130,10 +133,10 @@ export function MarqueeSettingsDialog({
             userSelect: 'none',
           }}
         >
-          <span>현수막 속성</span>
+          <span>{t('marquee.title')}</span>
           <button
             type="button"
-            aria-label="닫기"
+            aria-label={t('common.close')}
             onClick={onClose}
             style={{
               background: '#c0c0c0',
@@ -181,9 +184,9 @@ export function MarqueeSettingsDialog({
                 />
                 <span style={{ width: '32px', textAlign: 'right' }}>{local.fontSize || 14}</span>
               </div>
-              {colorSwatch('backgroundColor', '배경색')}
+              {colorSwatch('backgroundColor', t('marquee.bg'))}
               <div style={{ opacity: local.rainbow ? 0.45 : 1 }}>
-                {colorSwatch('textColor', '글자색')}
+                {colorSwatch('textColor', t('marquee.text'))}
               </div>
               <label
                 style={{

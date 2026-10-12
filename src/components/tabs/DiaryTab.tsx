@@ -4,6 +4,7 @@ import { BoardLayout } from '../shared/BoardLayout';
 import { KeepAlivePanels, SECTION_CONTENT_MIN_HEIGHT } from '../shared/KeepAlivePanels';
 import { compressImage } from '../../utils/imageCompressor';
 import { DiaryEntry, MemoryPhoto } from '../../types';
+import { useLocale } from '../../i18n/LocaleContext';
 
 // 하위 탭
 import { FoodTab } from './FoodTab';
@@ -438,6 +439,7 @@ function DiaryItem({ item, onView, isSmallView }: { item: DiaryEntry, onView: (i
 // 4. Main Tab Component
 // ----------------------------------------------------------------------
 export function DiaryTab() {
+  const { t } = useLocale();
   const [activeSubTab, setActiveSubTab] = useState<'entries' | 'food' | 'movie' | 'travel' | 'memory'>('entries');
 
   const getTabStyle = (tabName: string) => {
@@ -459,7 +461,7 @@ export function DiaryTab() {
       <div style={{ display: 'flex', alignItems: 'flex-end', paddingLeft: '2px' }}>
         {['entries', 'food', 'movie', 'travel', 'memory'].map(tab => (
           <button key={tab} onClick={() => setActiveSubTab(tab as any)} style={getTabStyle(tab)}>
-            {tab === 'entries' ? '일기' : tab === 'food' ? '맛집' : tab === 'movie' ? '영화' : tab === 'travel' ? '여행' : '추억'}
+            {tab === 'entries' ? t('diary.entries') : tab === 'food' ? t('diary.food') : tab === 'movie' ? t('diary.movie') : tab === 'travel' ? t('diary.travel') : t('diary.memory')}
           </button>
         ))}
       </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Save, X, Edit2, Star, StarHalf } from 'lucide-react';
+import { useLocale } from '../../i18n/LocaleContext';
 import { BoardLayout } from '../shared/BoardLayout';
 import { compressImage } from '../../utils/imageCompressor';
 import { ASSETS } from '../../config/assets';
@@ -295,6 +296,7 @@ function FoodItem({ item, onView, isSmallView }: any) {
 }
 
 export function FoodTab() {
+  const { t } = useLocale();
   return (
     <div className="w-full h-full">
       <BoardLayout 
@@ -306,10 +308,10 @@ export function FoodTab() {
         renderItem={props => <FoodItem {...props} />}
         gridCols="grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
         allowViewToggle={true}
-        booleanToggleFilter={{ column: 'revisit', label: '재방문의사' }}
+        booleanToggleFilter={{ column: 'revisit', label: t('board.revisit') }}
         sortOptions={[
-          { id: 'latest', label: '최신순', column: 'created_at', ascending: false },
-          { id: 'rating', label: '별점 높은 순', column: 'rating', ascending: false },
+          { id: 'latest', label: t('board.latest'), column: 'created_at', ascending: false },
+          { id: 'rating', label: t('board.ratingHigh'), column: 'rating', ascending: false },
         ]}
         defaultSortId="latest"
       />

@@ -8,6 +8,9 @@ import {
   makeBoardCacheKey,
   setBoardCache,
 } from '../../lib/boardQueryCache';
+import { useAuthContext } from '../../context/AuthContext';
+import { classicAlert, classicConfirm } from '../../lib/messageBox';
+import { useLocale } from '../../i18n/LocaleContext';
 import { SECTION_CONTENT_MIN_HEIGHT } from './KeepAlivePanels';
 
 type BoardItem = { id: string | number };
@@ -71,6 +74,8 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
   sortOptions = [],
   defaultSortId,
 }: BoardLayoutProps<T>) {
+  const { isOwner } = useAuthContext();
+  const { t } = useLocale();
   const initialSortId = defaultSortId || sortOptions[0]?.id || 'latest';
   const initialCacheKey = makeBoardCacheKey({
     tableName,
@@ -117,7 +122,7 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
     sortOptions.find((s) => s.id === sortId) ||
     sortOptions[0] || {
       id: 'latest',
-      label: '최신순',
+      label: t('board.latest'),
       column: 'created_at',
       ascending: false,
     };
@@ -233,16 +238,25 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
     }
   };
 
+  const requireOwner = async () => {
+    if (!isOwner) {
+      await classicAlert(t('msg.ownerOnly'), t('common.alert'), 'warning');
+      return false;
+    }
+    return true;
+  };
+
   const handleSave = async (data: any) => {
+    if (!(await requireOwner())) return;
     try {
       if (editingItem) {
         const { error } = await supabase.from(tableName).update(data).eq('id', editingItem.id);
         if (error) throw error;
-        alert('✓ 수정되었습니다!');
+        await classicAlert(t('msg.updated'));
       } else {
         const { error } = await supabase.from(tableName).insert(data);
         if (error) throw error;
-        alert('✓ 저장되었습니다!');
+        await classicAlert(t('msg.saved'));
       }
       setIsWriting(false);
       setEditingItem(null);
@@ -251,12 +265,13 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
       fetchData({ force: true });
     } catch (error) {
       console.error('Save error:', error);
-      alert('저장 중 오류가 발생했습니다.');
+      await classicAlert(t('msg.saveError'), t('common.alert'), 'error');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+    if (!(await requireOwner())) return;
+    if (!(await classicConfirm(t('msg.deleteConfirm'), t('common.confirm'), 'warning'))) return;
     try {
       const { error } = await supabase.from(tableName).delete().eq('id', id);
       if (error) throw error;
@@ -281,6 +296,7 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
   };
 
   const handleEditClick = async (item: any) => {
+    if (!(await requireOwner())) return;
     if (!needsFullRow(item)) {
       setEditingItem(item);
       setIsWriting(true);
@@ -510,27 +526,29 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
               }}
               onMouseDown={(e) => e.currentTarget.style.border = '2px inset #dfdfdf'}
               onMouseUp={(e) => e.currentTarget.style.border = '2px outset #dfdfdf'}
-              title={isSmallView ? "크게 보기" : "작게 보기"}
+              title={isSmallView ? t('board.viewLarge') : t('board.viewSmall')}
             >
               {isSmallView ? <List size={14} /> : <LayoutGrid size={14} />}
             </button>
           )}
 
-          <button 
-            onClick={() => { setEditingItem(null); setIsWriting(true); }}
-            style={{ 
-              background: '#c0c0c0', 
-              border: '2px outset #dfdfdf', 
-              padding: '2px 8px', 
-              fontSize: '12px', 
-              fontWeight: 'bold', 
-              cursor: 'pointer' 
-            }}
-            onMouseDown={(e) => e.currentTarget.style.border = '2px inset #dfdfdf'}
-            onMouseUp={(e) => e.currentTarget.style.border = '2px outset #dfdfdf'}
-          >
-            +
-          </button>
+          {isOwner && (
+            <button 
+              onClick={() => { setEditingItem(null); setIsWriting(true); }}
+              style={{ 
+                background: '#c0c0c0', 
+                border: '2px outset #dfdfdf', 
+                padding: '2px 8px', 
+                fontSize: '12px', 
+                fontWeight: 'bold', 
+                cursor: 'pointer' 
+              }}
+              onMouseDown={(e) => e.currentTarget.style.border = '2px inset #dfdfdf'}
+              onMouseUp={(e) => e.currentTarget.style.border = '2px outset #dfdfdf'}
+            >
+              +
+            </button>
+          )}
         </div>
       </div>
 

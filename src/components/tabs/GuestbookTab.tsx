@@ -2,12 +2,18 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { GuestbookEntry } from '../../types';
 import { CornerDownRight } from 'lucide-react';
+import { useAuthContext } from '../../context/AuthContext';
+import { classicAlert } from '../../lib/messageBox';
+import { useLocale } from '../../i18n/LocaleContext';
 
 interface GuestbookTabProps {
-  userNickname: string;
+  onRequestLogin?: () => void;
 }
 
-export function GuestbookTab({ userNickname }: GuestbookTabProps) {
+export function GuestbookTab({ onRequestLogin }: GuestbookTabProps) {
+  const auth = useAuthContext();
+  const { t } = useLocale();
+  const userNickname = auth.profile?.nickname ?? '';
   const [guestbookEntries, setGuestbookEntries] = useState<GuestbookEntry[]>([]);
   
   const [message, setMessage] = useState('');
@@ -31,29 +37,32 @@ export function GuestbookTab({ userNickname }: GuestbookTabProps) {
   };
 
   const handleSubmit = async () => {
-    if (!userNickname) {
-      alert("오류: 닉네임이 없습니다. '내정보'에서 닉네임을 설정해주세요.");
+    if (!auth.isLoggedIn || !auth.user || !userNickname) {
+      void classicAlert(t('msg.guestbookNeedLogin'), t('common.alert'), 'warning');
+      onRequestLogin?.();
       return;
     }
     if (!message.trim()) {
-      alert("내용을 입력해주세요!");
+      void classicAlert(t('msg.needContent'), t('common.alert'), 'warning');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await supabase.from('guestbook').insert({
+      const { error } = await supabase.from('guestbook').insert({
         nickname: userNickname,
         message: message.trim(),
-        parent_id: replyId 
+        parent_id: replyId,
+        user_id: auth.user.id,
       });
+      if (error) throw error;
       
       setMessage(''); 
       setReplyId(null); 
       await fetchGuestbookEntries(); 
     } catch (error) {
       console.error('Error submitting guestbook:', error);
-      alert('저장에 실패했습니다.');
+      void classicAlert(t('msg.saveFailedLogin'), t('common.alert'), 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -94,10 +103,41 @@ export function GuestbookTab({ userNickname }: GuestbookTabProps) {
     <div style={{ background: '#c0c0c0', border: '3px outset #dfdfdf', padding: '20px' }}>
       
       <div style={{ background: '#000080', color: 'white', padding: '4px 8px', marginBottom: '15px', fontWeight: 'bold' }}>
-        방명록
+        {t('nav.guestbook')}
       </div>
 
       {/* 작성 폼 */}
+      {!auth.isLoggedIn ? (
+        <div
+          style={{
+            marginBottom: '20px',
+            border: '2px groove #dfdfdf',
+            padding: '12px',
+            background: '#e0e0e0',
+            fontSize: '13px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <span>{t('guestbook.loginToWrite')}</span>
+          <button
+            type="button"
+            onClick={() => onRequestLogin?.()}
+            style={{
+              background: '#c0c0c0',
+              border: '2px outset #dfdfdf',
+              padding: '6px 12px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              minHeight: '36px',
+            }}
+          >
+            {t('menu.login')}
+          </button>
+        </div>
+      ) : (
       <div style={{ 
         marginBottom: '20px', 
         border: '2px groove #dfdfdf', 
@@ -105,15 +145,19 @@ export function GuestbookTab({ userNickname }: GuestbookTabProps) {
         background: '#e0e0e0',
         display: 'flex', 
         alignItems: 'center',
-        gap: '6px'
+        gap: '6px',
+        flexWrap: 'wrap',
       }}>
+        <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#000080', whiteSpace: 'nowrap' }}>
+          {userNickname}
+        </span>
         {replyId && (
           <div style={{ 
-            fontSize: '11px', fontWeight: 'bold', color: '#000080', // 폰트 사이즈 줄임
+            fontSize: '11px', fontWeight: 'bold', color: '#000080',
             display: 'flex', alignItems: 'center', gap: '2px',
             whiteSpace: 'nowrap'
           }}>
-            <CornerDownRight size={10}/> 답글:
+            <CornerDownRight size={10}/> {t('guestbook.reply')}:
           </div>
         )}
 
@@ -123,19 +167,19 @@ export function GuestbookTab({ userNickname }: GuestbookTabProps) {
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={replyId 
-            ? `선택한 메시지에 대한 답글을 입력하세요...` 
-            : `${userNickname ? userNickname : '방문자'}님, 한마디 남겨주세요...`
+            ? t('guestbook.replyPlaceholder')
+            : t('guestbook.writePlaceholder')
           }
           disabled={isSubmitting}
           style={{ 
             flex: 1, 
-            minWidth: 0,
+            minWidth: '120px',
             background: replyId ? '#ffffcc' : 'white', 
             border: '2px inset #dfdfdf', 
             padding: '4px 8px',
             fontFamily: 'inherit',
-            height: '28px',
-            fontSize: '12px', // 폰트 사이즈 줄임
+            height: '36px',
+            fontSize: '16px',
             boxSizing: 'border-box'
           }}
         />
@@ -143,19 +187,19 @@ export function GuestbookTab({ userNickname }: GuestbookTabProps) {
         <button 
           onClick={handleSubmit} 
           disabled={isSubmitting}
-          title={replyId ? "답글 등록" : "남기기"}
+          title={replyId ? t('guestbook.reply') : t('guestbook.submit')}
           style={{ 
             background: '#c0c0c0', 
             border: '2px outset #dfdfdf', 
-            width: '28px', 
-            height: '28px',
+            width: '36px', 
+            height: '36px',
             flexShrink: 0,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: 'bold', 
             cursor: isSubmitting ? 'wait' : 'pointer',
-            fontSize: '12px', // 폰트 사이즈 줄임
+            fontSize: '12px',
             padding: 0
           }}
           onMouseDown={(e) => e.currentTarget.style.border = '2px inset #dfdfdf'} 
@@ -164,6 +208,7 @@ export function GuestbookTab({ userNickname }: GuestbookTabProps) {
           {replyId ? '↵' : '✎'}
         </button>
       </div>
+      )}
       
       {/* 목록 영역 */}
       {guestbookEntries.length === 0 ? (
@@ -225,9 +270,9 @@ export function GuestbookTab({ userNickname }: GuestbookTabProps) {
                         fontWeight: 'normal',
                         whiteSpace: 'nowrap'
                       }}
-                      title="이 글에 답글 달기"
+                      title={t('guestbook.replyTitle')}
                     >
-                      [답글]
+                      [{t('guestbook.reply')}]
                     </span>
 
                     {/* [수정] 날짜 위치 이동: 답글 버튼 뒤 */}

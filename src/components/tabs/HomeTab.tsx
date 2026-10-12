@@ -3,8 +3,17 @@ import { Save, Edit2, X } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import { HomePost, HomeComment } from '../../types';
 import { compressImage } from '../../utils/imageCompressor';
+import { useAuthContext } from '../../context/AuthContext';
+import { classicAlert, classicConfirm } from '../../lib/messageBox';
+import { useLocale } from '../../i18n/LocaleContext';
 
-export function HomeTab() {
+interface HomeTabProps {
+  onRequestLogin?: () => void;
+}
+
+export function HomeTab({ onRequestLogin }: HomeTabProps) {
+  const { t } = useLocale();
+  const auth = useAuthContext();
   const [homePosts, setHomePosts] = useState<HomePost[]>([]);
   const [selectedHomePost, setSelectedHomePost] = useState<HomePost | null>(null);
   const [homeComments, setHomeComments] = useState<HomeComment[]>([]);
@@ -19,7 +28,6 @@ export function HomeTab() {
   const [newHomeContent, setNewHomeContent] = useState('');
   const [newHomeImage, setNewHomeImage] = useState<File | null>(null);
 
-  const [commentNickname, setCommentNickname] = useState('');
   const [commentContent, setCommentContent] = useState('');
   
   // [New] 로딩 상태 추가 (선택 사항이지만 UX에 좋음)
@@ -34,7 +42,7 @@ export function HomeTab() {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+    const dayOfWeek = t('home.days').split(',')[date.getDay()];
     return `${year}.${month}.${day} (${dayOfWeek})`;
   };
 
@@ -57,7 +65,8 @@ export function HomeTab() {
   };
 
   const handleCreateHomePost = async () => {
-    if (!newHomeTitle.trim() || !newHomeContent.trim()) { alert('제목과 내용을 모두 입력해주세요!'); return; }
+    if (!auth.isOwner) { void classicAlert(t('msg.ownerNoticeOnly'), t('common.alert'), 'warning'); return; }
+    if (!newHomeTitle.trim() || !newHomeContent.trim()) { void classicAlert(t('msg.needTitleContent'), t('common.alert'), 'warning'); return; }
     let imageUrl = null;
     if (newHomeImage) {
       try {
@@ -68,23 +77,24 @@ export function HomeTab() {
           reader.onerror = reject;
           reader.readAsDataURL(compressedImage);
         });
-      } catch (imgError) { alert(`이미지 처리 실패: ${imgError}`); return; }
+      } catch (imgError) { void classicAlert(t('msg.imageFailed', { error: String(imgError) }), t('common.alert'), 'error'); return; }
     }
     try {
       const { error } = await supabase.from('home_posts').insert({ title: newHomeTitle, content: newHomeContent, image_url: imageUrl });
-      if (error) { alert(`저장 실패: ${error.message}`); } else { await fetchHomePosts(); setNewHomeTitle(''); setNewHomeContent(''); setNewHomeImage(null); setShowNewHomePost(false); alert('✓ 공지사항이 등록되었습니다!'); }
+      if (error) { void classicAlert(t('msg.saveFailedDetail', { error: error.message }), t('common.alert'), 'error'); } else { await fetchHomePosts(); setNewHomeTitle(''); setNewHomeContent(''); setNewHomeImage(null); setShowNewHomePost(false); void classicAlert(t('msg.noticeCreated')); }
     } catch (error) { console.error('Error creating post:', error); }
   };
 
   const handleHomePostEdit = () => {
-    const password = prompt('Enter password to edit:');
-    if (password === '1223') {
-      if (selectedHomePost) {
-        setEditedHomeTitle(selectedHomePost.title);
-        setEditedHomeContent(selectedHomePost.content);
-        setIsEditingHomePost(true);
-      }
-    } else if (password !== null) alert('Incorrect Password');
+    if (!auth.isOwner) {
+      void classicAlert(t('msg.ownerEditOnly'), t('common.alert'), 'warning');
+      return;
+    }
+    if (selectedHomePost) {
+      setEditedHomeTitle(selectedHomePost.title);
+      setEditedHomeContent(selectedHomePost.content);
+      setIsEditingHomePost(true);
+    }
   };
 
   const handleSaveHomePost = async () => {
@@ -99,18 +109,56 @@ export function HomeTab() {
           reader.onerror = reject;
           reader.readAsDataURL(compressedImage);
         });
-      } catch (imgError) { alert(`Failed: ${imgError}`); return; }
+      } catch (imgError) { void classicAlert(t('msg.imageFailed', { error: String(imgError) }), t('common.alert'), 'error'); return; }
     }
     const { error } = await supabase.from('home_posts').update({ title: editedHomeTitle, content: editedHomeContent, image_url: imageUrl }).eq('id', selectedHomePost.id);
-    if (error) { alert(`UPDATE FAILED: ${error.message}`); return; }
+    if (error) { void classicAlert(t('msg.saveFailedDetail', { error: error.message }), t('common.alert'), 'error'); return; }
     await fetchHomePosts();
     const { data } = await supabase.from('home_posts').select('*').eq('id', selectedHomePost.id).single();
     if (data) setSelectedHomePost(data);
-    setIsEditingHomePost(false); setEditedHomeImage(null); alert('✓ Post updated!');
+    setIsEditingHomePost(false); setEditedHomeImage(null); void classicAlert('✓ Post updated!');
   };
 
-  const handleDeleteComment = async (commentId: number) => { if (!confirm('Are you sure?')) return; try { await supabase.from('home_comments').delete().eq('id', commentId); if (selectedHomePost) await fetchHomeComments(selectedHomePost.id); } catch (error) { console.error(error); } };
-  const handleSubmitComment = async () => { if (!commentNickname.trim() || !commentContent.trim()) return; if (!selectedHomePost) return; try { await supabase.from('home_comments').insert({ post_id: selectedHomePost.id, nickname: commentNickname.trim(), content: commentContent.trim() }); await fetchHomeComments(selectedHomePost.id); setCommentNickname(''); setCommentContent(''); } catch (error) { console.error(error); } };
+  const handleDeleteComment = async (commentId: number) => {
+    if (!auth.isLoggedIn) {
+      void classicAlert(t('msg.needLogin'), t('common.alert'), 'warning');
+      onRequestLogin?.();
+      return;
+    }
+    if (!(await classicConfirm(t('msg.deleteConfirm'), t('common.confirm'), 'warning'))) return;
+    try {
+      const { error } = await supabase.from('home_comments').delete().eq('id', commentId);
+      if (error) throw error;
+      if (selectedHomePost) await fetchHomeComments(selectedHomePost.id);
+    } catch (error) {
+      console.error(error);
+      void classicAlert(t('msg.deleteFailed'), t('common.alert'), 'error');
+    }
+  };
+
+  const handleSubmitComment = async () => {
+    if (!auth.isLoggedIn || !auth.user || !auth.profile) {
+      void classicAlert(t('msg.commentNeedLogin'), t('common.alert'), 'warning');
+      onRequestLogin?.();
+      return;
+    }
+    if (!commentContent.trim()) return;
+    if (!selectedHomePost) return;
+    try {
+      const { error } = await supabase.from('home_comments').insert({
+        post_id: selectedHomePost.id,
+        nickname: auth.profile.nickname,
+        content: commentContent.trim(),
+        user_id: auth.user.id,
+      });
+      if (error) throw error;
+      await fetchHomeComments(selectedHomePost.id);
+      setCommentContent('');
+    } catch (error) {
+      console.error(error);
+      void classicAlert(t('msg.commentSaveFailed'), t('common.alert'), 'error');
+    }
+  };
 
   return (
     // [수정] 최상위 컨테이너: 높이 100% (부모 WindowFrame 채움)
@@ -125,7 +173,7 @@ export function HomeTab() {
     }}>
       <div style={{ background: '#000080', color: 'white', padding: '4px 8px', marginBottom: '15px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
         <span>공지 ({homePosts.length} posts)</span>
-        {!selectedHomePost && !isEditingHomePost && (
+        {!selectedHomePost && !isEditingHomePost && auth.isOwner && (
           <button onClick={() => setShowNewHomePost(true)} style={{ background: '#c0c0c0', border: '2px outset #dfdfdf', padding: '2px 8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', color: 'black' }} onMouseDown={(e) => e.currentTarget.style.border = '2px inset #dfdfdf'} onMouseUp={(e) => e.currentTarget.style.border = '2px outset #dfdfdf'}>+</button>
         )}
       </div>
@@ -151,7 +199,7 @@ export function HomeTab() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
               <button onClick={() => { setSelectedHomePost(null); setIsEditingHomePost(false); setHomeComments([]); setEditedHomeImage(null); }} style={{ background: '#c0c0c0', border: '3px outset #dfdfdf', padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }} onMouseDown={(e) => e.currentTarget.style.border = '3px inset #dfdfdf'} onMouseUp={(e) => e.currentTarget.style.border = '3px outset #dfdfdf'}>&lt;&lt;</button>
-              {!isEditingHomePost && (<button onClick={handleHomePostEdit} style={{ background: '#c0c0c0', border: '3px outset #dfdfdf', padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }} onMouseDown={(e) => e.currentTarget.style.border = '3px inset #dfdfdf'} onMouseUp={(e) => e.currentTarget.style.border = '3px outset #dfdfdf'}><Edit2 size={14} /></button>)}
+              {!isEditingHomePost && auth.isOwner && (<button onClick={handleHomePostEdit} style={{ background: '#c0c0c0', border: '3px outset #dfdfdf', padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }} onMouseDown={(e) => e.currentTarget.style.border = '3px inset #dfdfdf'} onMouseUp={(e) => e.currentTarget.style.border = '3px outset #dfdfdf'}><Edit2 size={14} /></button>)}
             </div>
             <div style={{ background: 'white', border: '2px inset #dfdfdf', padding: '15px' }}>
               {selectedHomePost.image_url && (<div style={{ marginBottom: '15px' }}><img src={selectedHomePost.image_url} alt="Post" style={{ maxWidth: '100%', width: '100%', height: 'auto', border: '1px solid #000' }} /></div>)}
@@ -168,7 +216,26 @@ export function HomeTab() {
                     <div style={{ background: '#000080', color: 'white', padding: '4px 8px', marginBottom: '10px', fontWeight: 'bold', fontSize: '14px' }}>Comments ({homeComments.length})</div>
                     {homeComments.length === 0 ? (<div style={{ background: '#f0f0f0', border: '1px inset #dfdfdf', padding: '10px', marginBottom: '15px', fontSize: '12px', fontStyle: 'italic', textAlign: 'center', color: '#666' }}>No comments yet. Be the first to comment!</div>) : (
                       <div style={{ marginBottom: '15px' }}>{homeComments.map((comment) => (<div key={comment.id} style={{ background: '#f0f0f0', border: '1px solid #999', padding: '10px', marginBottom: '8px', fontSize: '13px', position: 'relative' }}><div style={{ marginBottom: '5px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}><div><span style={{ fontWeight: 'bold', color: '#0000cc' }}>{comment.nickname}</span><span style={{ color: '#666', fontSize: '11px', marginLeft: '10px' }}>[{new Date(comment.created_at).toLocaleString()}]</span></div><button onClick={(e) => { e.stopPropagation(); handleDeleteComment(comment.id); }} style={{ background: '#c0c0c0', border: '2px outset #dfdfdf', padding: '2px 6px', fontSize: '10px', cursor: 'pointer', fontWeight: 'bold', color: '#cc0000', display: 'flex', alignItems: 'center', gap: '2px' }} onMouseDown={(e) => e.currentTarget.style.border = '2px inset #dfdfdf'} onMouseUp={(e) => e.currentTarget.style.border = '2px outset #dfdfdf'} title="Delete comment"><X size={10} /></button></div><div style={{ color: '#000' }}>{comment.content}</div></div>))}</div>)}
-                    <div style={{ background: '#e0e0e0', border: '2px outset #dfdfdf', padding: '15px' }}><div style={{ marginBottom: '10px' }}><label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '13px' }}>Nickname:</label><input type="text" value={commentNickname} onChange={(e) => setCommentNickname(e.target.value)} placeholder="Your nickname" style={{ background: 'white', border: '2px inset #dfdfdf', padding: '6px', width: '100%', fontFamily: 'inherit', fontSize: '13px', boxSizing: 'border-box' }} /></div><div style={{ marginBottom: '10px' }}><label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '13px' }}>Comment:</label><textarea value={commentContent} onChange={(e) => setCommentContent(e.target.value)} placeholder="Write your comment..." rows={3} style={{ background: 'white', border: '2px inset #dfdfdf', padding: '6px', width: '100%', fontFamily: 'inherit', fontSize: '13px', resize: 'vertical', boxSizing: 'border-box' }} /></div><button onClick={handleSubmitComment} style={{ background: '#c0c0c0', border: '3px outset #dfdfdf', padding: '8px 20px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', width: '100%' }} onMouseDown={(e) => e.currentTarget.style.border = '3px inset #dfdfdf'} onMouseUp={(e) => e.currentTarget.style.border = '3px outset #dfdfdf'}>글쓰기</button></div></div>
+                    <div style={{ background: '#e0e0e0', border: '2px outset #dfdfdf', padding: '15px' }}>
+                      {!auth.isLoggedIn ? (
+                        <div style={{ fontSize: '13px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                          <span>로그인 후 댓글을 남길 수 있어요.</span>
+                          <button type="button" onClick={() => onRequestLogin?.()} style={{ background: '#c0c0c0', border: '2px outset #dfdfdf', padding: '6px 12px', fontWeight: 'bold', cursor: 'pointer', minHeight: '36px' }}>로그인</button>
+                        </div>
+                      ) : (
+                        <>
+                          <div style={{ marginBottom: '10px', fontSize: '13px' }}>
+                            <b>닉네임:</b> {auth.profile?.nickname}
+                          </div>
+                          <div style={{ marginBottom: '10px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '13px' }}>Comment:</label>
+                            <textarea value={commentContent} onChange={(e) => setCommentContent(e.target.value)} placeholder="Write your comment..." rows={3} style={{ background: 'white', border: '2px inset #dfdfdf', padding: '6px', width: '100%', fontFamily: 'inherit', fontSize: '16px', resize: 'vertical', boxSizing: 'border-box' }} />
+                          </div>
+                          <button onClick={handleSubmitComment} style={{ background: '#c0c0c0', border: '3px outset #dfdfdf', padding: '8px 20px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', width: '100%', minHeight: '40px' }} onMouseDown={(e) => e.currentTarget.style.border = '3px inset #dfdfdf'} onMouseUp={(e) => e.currentTarget.style.border = '3px outset #dfdfdf'}>글쓰기</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </>
               )}
             </div>

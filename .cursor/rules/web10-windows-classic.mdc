@@ -1,0 +1,55 @@
+---
+description: Web 1.0 + Windows Classic visual constitution for Cyber Sooho World
+alwaysApply: true
+---
+
+# Cyber Sooho — Visual Constitution (always)
+
+Full text: [`project/CONSTITUTION.md`](project/CONSTITUTION.md). If UI work conflicts with that file, **follow the constitution**, not modern redesign instincts.
+
+## Dual-stack
+
+- **Under the hood**: modern stack OK (React, Vite, TS, Tailwind, Supabase, Vercel).
+- **On screen**: Web 1.0 full replica; **Windows Classic (95/98/2000)** is the visual law.
+
+## Must look like
+
+- Desktop teal / classic wallpaper + **single ~800px app window**
+- Chrome: title bar, menu bar, tabs, status bar
+- 3D bevels: light from **top-left**
+  - Raised/outset buttons: light top-left, dark bottom-right
+  - Sunken/inset inputs/content: reverse
+- Face `#c0c0c0`, highlight `#fff`/`#dfdfdf`, shadow `#808080`/`#404040`, title `#000080`→`#1084d0`, select `#000080`, desktop `#008080`
+
+## Typography & media
+
+- Prefer pixel/dot fonts already in project (`ThinRounded`, `DungGeunMo`, Tahoma for chrome). No Inter/Roboto/system-ui SaaS look.
+- Keep `image-rendering: pixelated` and custom cursors.
+- Motion: click/press only. No soft fades, springs, parallax, glass, neon glow.
+
+## Forbidden UI
+
+- Rounded marketing cards, pill CTAs, soft multi-layer shadows, glassmorphism, purple gradients, hero landing layouts, flat Material/iOS chrome that removes bevels.
+- Native `input[type=range]` blue round thumbs; native `input[type=color]` OS pickers — use `ClassicSlider` + `ColorPickerDialog` instead.
+
+## Implementation
+
+- Reuse `WindowFrame`, `WindowsTitleBar`, `MenuBar`, `Navigation` — do not invent a new shell.
+- Tailwind is a tool; output must still be Classic. Avoid `rounded-xl`, `shadow-lg`, `backdrop-blur` as defaults.
+- Before shipping UI changes, re-read `project/CONSTITUTION.md` Do/Don’t checklist.
+
+## Performance defaults (CONSTITUTION §5)
+
+For board/tab/list UIs, always apply:
+- SWR-style table cache (`boardQueryCache`) — paint cache, quiet revalidate, invalidate on mutate
+- Slim `listSelect` (no gallery/base64/`select('*')` on lists); hydrate full row on detail/edit
+- Visit-once keep-alive (`KeepAlivePanels`) + shared content `min-height` — no window jump on section switch
+
+## Bilingual defaults (CONSTITUTION §6)
+
+Site is **ko + en** (MenuBar flag toggle). For every new feature / UI string:
+- No hardcoded Korean/English UI copy — use `useLocale().t('key')` + `src/i18n/messages.ts`
+- Add **both** `ko` and `en` keys in the same change; never “English later”
+- Alerts/confirms/prompts and thrown user-facing errors must go through `t()` / i18n keys
+- Do **not** auto-translate user content (posts, guestbook, marquee DB text)
+- Check EN layout length so Classic chrome does not break
