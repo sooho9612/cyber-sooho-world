@@ -246,15 +246,13 @@ export function MarqueeSettingsDialog({
             style={{
               border: '2px inset #808080',
               background: local.backgroundColor,
-              color: local.rainbow ? undefined : local.textColor,
               minHeight: '28px',
               height: `${Math.max(28, (local.fontSize || 14) + 14)}px`,
               overflow: 'hidden',
               marginBottom: '14px',
               display: 'flex',
               alignItems: 'center',
-              padding: '0 8px',
-              whiteSpace: 'nowrap',
+              padding: '0 4px',
             }}
           >
             {local.rainbow && (
@@ -268,20 +266,43 @@ export function MarqueeSettingsDialog({
                   .marquee-preview-rainbow {
                     animation: marquee-preview-rainbow 3s linear infinite;
                   }
+                  .marquee-preview-input::placeholder {
+                    color: inherit;
+                    opacity: 0.55;
+                  }
                 `}
               </style>
             )}
-            <span
-              className={local.rainbow ? 'marquee-preview-rainbow' : undefined}
+            <input
+              type="text"
+              className={`marquee-preview-input${local.rainbow ? ' marquee-preview-rainbow' : ''}`}
+              value={local.text}
+              placeholder={DEFAULT_MARQUEE.text}
+              aria-label="현수막 텍스트"
+              onChange={(e) => setLocal({ ...local, text: e.target.value })}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void persist();
+                }
+              }}
               style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                color: local.rainbow ? undefined : local.textColor,
+                fontFamily: 'inherit',
                 fontSize: `${local.fontSize || 14}px`,
                 fontWeight: local.bold !== false ? 'bold' : 'normal',
                 fontStyle: local.italic ? 'italic' : 'normal',
                 textDecoration: local.underline ? 'underline' : 'none',
+                padding: '0 4px',
+                whiteSpace: 'nowrap',
+                caretColor: local.rainbow ? '#ffffff' : local.textColor,
               }}
-            >
-              {local.text || DEFAULT_MARQUEE.text}
-            </span>
+            />
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
