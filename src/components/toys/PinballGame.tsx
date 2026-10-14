@@ -73,7 +73,7 @@ export function PinballGame({ onClose }: PinballGameProps) {
           onMouseUp={(e) => e.currentTarget.style.border = '2px outset #dfdfdf'}
           title="Close Game"
         >
-          <X size={14} color="black" />
+          <X size={14} />
         </button>
 
         {/* 2. 게임 영역 (Iframe) */}

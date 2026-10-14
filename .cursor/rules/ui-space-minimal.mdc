@@ -1,0 +1,22 @@
+---
+description: Owner taste — space-efficient, minimal UI density (flush, short copy, no unused chrome)
+alwaysApply: true
+---
+
+# UI space & minimal (owner)
+
+Full text: [`docs/UI_SPACE_MINIMAL.md`](../../docs/UI_SPACE_MINIMAL.md).  
+Visual language still follows [`CONSTITUTION.md`](../../CONSTITUTION.md) / `web10-windows-classic`. This rule is **density & restraint** on top of Classic.
+
+## Taste
+
+- Space-efficient. Prefer flush related blocks over decorative gaps.
+- Don’t ship unused chrome, duplicate labels, or “nice to have” controls.
+- Minimal copy: icon + short verb beats long button sentences.
+- Secondary info (e.g. char count) lives **inside** the control, not as a separate column.
+- Overlays must not cover the subject (avatar, body text); move/re-anchor instead.
+- On `#000080` hover/selection fill, labels/icons must be **white** (no hardcoded black on children — inherit/`currentColor`).
+
+## Before shipping UI
+
+Re-read `docs/UI_SPACE_MINIMAL.md` checklist. If Classic and minimal conflict, Classic wins for look; minimal wins for whitespace/wordiness inside Classic.

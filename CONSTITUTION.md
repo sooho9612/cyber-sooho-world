@@ -22,7 +22,8 @@
 
 4. **의도적 한계를 존중**  
    - Web 1.0의 매력은 “여백의 미”가 아니라 **제약 속 표현**이다.  
-   - 800×600 시대의 밀도·테두리·픽셀을 기준으로 설계한다.
+   - 800×600 시대의 밀도·테두리·픽셀을 기준으로 설계한다.  
+   - 오너 취향(공간 효율·미니멀·불필요 UI 거부)은 [`docs/UI_SPACE_MINIMAL.md`](docs/UI_SPACE_MINIMAL.md)를 따른다. Classic 복각을 깨지 않는 선에서 **밀도는 아끼고, 안 쓰는 건 안 쓴다.**
 
 ---
 
@@ -311,7 +312,8 @@ Windows Standard / 본 프로젝트 실사용 값과 일치시킨다.
 3. “더 현대적으로”, “더 깔끔하게”라는 요청이 와도 **시각 복각을 깨지 않는 선**에서만 개선한다.  
 4. 기능 추가는 환영. 시각 언어 변경은 헌법 개정 없이는 금지.  
 5. 게시판·갤러리·탭형 목록을 새로 만들면 **§5를 기본 골격으로** 시작한다 (`BoardLayout`, `boardQueryCache`, `KeepAlivePanels`).  
-6. **기능·카피·알림을 추가할 때는 §6(한·영)을 기본 골격으로** 한다 (`LocaleProvider`, `messages.ts`, `t()`). 영어 미반영 PR은 미완으로 본다.
+6. **기능·카피·알림을 추가할 때는 §6(한·영)을 기본 골격으로** 한다 (`LocaleProvider`, `messages.ts`, `t()`). 영어 미반영 PR은 미완으로 본다.  
+7. 레이아웃·카피·툴바 polish 시 [`docs/UI_SPACE_MINIMAL.md`](docs/UI_SPACE_MINIMAL.md)를 함께 본다 (flush, 짧은 라벨, 가림 금지).
 
 ---
 
@@ -322,4 +324,4 @@ Windows Standard / 본 프로젝트 실사용 값과 일치시킨다.
 
 ---
 
-*Last updated: 2026-10-12 — §6 bilingual (ko/en) defaults for all new features.*
+*Last updated: 2026-10-14 — §0/§8 link to docs/UI_SPACE_MINIMAL.md (owner density taste).*

@@ -83,7 +83,7 @@ export function useMarqueeSettings() {
 
     const { data: existing } = await supabase
       .from('homepage_settings')
-      .select('compressor')
+      .select('compressor, plaza')
       .eq('id', 1)
       .maybeSingle();
 
@@ -96,6 +96,7 @@ export function useMarqueeSettings() {
           quality: 0.7,
         },
         marquee: normalized,
+        plaza: existing?.plaza ?? { bgId: 'halloween' },
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'id' }

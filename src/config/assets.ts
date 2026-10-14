@@ -33,4 +33,44 @@ export const ASSETS = {
   toyStarcraft: storageUrl('Image/toybox/starcraft.png'),
   toyPinball: storageUrl('Image/toybox/pinball.png'),
   toyRecycle: storageUrl('Image/toybox/recyclebin.png'),
+  /** Plaza stage — swap avatar_stand.png later without code changes */
+  plazaBg: `${import.meta.env.BASE_URL}plaza/plaza_bg.png`,
+  plazaBgHalloween: `${import.meta.env.BASE_URL}plaza/plaza_bg_halloween.png`,
+  plazaAvatar: `${import.meta.env.BASE_URL}plaza/avatar_stand.png?v=2`,
 } as const;
+
+/** Selectable plaza stage backgrounds (Control Panel → 광장) */
+export const PLAZA_BG_IDS = ['classic', 'halloween'] as const;
+export type PlazaBgId = (typeof PLAZA_BG_IDS)[number];
+
+export type PlazaBackgroundOption = {
+  id: PlazaBgId;
+  /** i18n key for label */
+  labelKey: `plaza.bg.${PlazaBgId}`;
+  url: string;
+};
+
+export const PLAZA_BACKGROUNDS: readonly PlazaBackgroundOption[] = [
+  {
+    id: 'classic',
+    labelKey: 'plaza.bg.classic',
+    url: ASSETS.plazaBg,
+  },
+  {
+    id: 'halloween',
+    labelKey: 'plaza.bg.halloween',
+    url: ASSETS.plazaBgHalloween,
+  },
+] as const;
+
+/** Active default until owner picks another in Control Panel */
+export const DEFAULT_PLAZA_BG_ID: PlazaBgId = 'halloween';
+
+export function resolvePlazaBgUrl(id: PlazaBgId | string | null | undefined): string {
+  const found = PLAZA_BACKGROUNDS.find((b) => b.id === id);
+  return found?.url ?? PLAZA_BACKGROUNDS.find((b) => b.id === DEFAULT_PLAZA_BG_ID)!.url;
+}
+
+export function isPlazaBgId(value: unknown): value is PlazaBgId {
+  return typeof value === 'string' && (PLAZA_BG_IDS as readonly string[]).includes(value);
+}

@@ -168,10 +168,17 @@ export type MarqueeSettings = {
   fontSize: number;
 };
 
+/** Site-wide plaza stage settings (homepage_settings.plaza) */
+export type PlazaSettings = {
+  /** Catalog id from PLAZA_BACKGROUNDS */
+  bgId: string;
+};
+
 /** homepage_settings singleton row */
 export interface HomepageSettingsRow {
   id: number;
   compressor: CompressorSettings;
   marquee?: MarqueeSettings;
+  plaza?: PlazaSettings;
   updated_at?: string;
 }

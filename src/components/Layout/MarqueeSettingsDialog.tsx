@@ -150,7 +150,7 @@ export function MarqueeSettingsDialog({
               cursor: 'default',
             }}
           >
-            <X size={10} color="black" />
+            <X size={10} />
           </button>
         </div>
 

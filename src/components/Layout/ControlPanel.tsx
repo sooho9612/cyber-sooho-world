@@ -7,6 +7,7 @@ interface ControlPanelProps {
   onClose: () => void;
   onOpenCompressor: () => void;
   onOpenMarquee: () => void;
+  onOpenPlaza: () => void;
 }
 
 export function ControlPanel({
@@ -14,6 +15,7 @@ export function ControlPanel({
   onClose,
   onOpenCompressor,
   onOpenMarquee,
+  onOpenPlaza,
 }: ControlPanelProps) {
   const { t } = useLocale();
   const [selected, setSelected] = useState<string | null>(null);
@@ -31,11 +33,17 @@ export function ControlPanel({
       label: t('panel.marquee'),
       icon: `${import.meta.env.BASE_URL}icons/marquee.ico`,
     },
+    {
+      id: 'plaza',
+      label: t('panel.plaza'),
+      icon: `${import.meta.env.BASE_URL}icons/display.ico`,
+    },
   ] as const;
 
   const openItem = (id: string) => {
     if (id === 'compressor') onOpenCompressor();
     if (id === 'marquee') onOpenMarquee();
+    if (id === 'plaza') onOpenPlaza();
   };
 
   const iconBtn = (id: string): CSSProperties => ({
@@ -113,7 +121,7 @@ export function ControlPanel({
               cursor: 'default',
             }}
           >
-            <X size={10} color="black" />
+            <X size={10} />
           </button>
         </div>
 
@@ -173,7 +181,8 @@ export function ControlPanel({
                   textAlign: 'center',
                   lineHeight: 1.2,
                   background: selected === item.id ? '#000080' : 'transparent',
-                  color: selected === item.id ? '#fff' : '#000',
+                  /* inherit so App `button:hover { color: white }` reaches the label */
+                  color: selected === item.id ? '#fff' : 'inherit',
                   padding: '1px 2px',
                   maxWidth: '84px',
                   wordBreak: 'break-word',

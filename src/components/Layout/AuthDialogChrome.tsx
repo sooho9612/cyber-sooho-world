@@ -93,7 +93,7 @@ export function AuthDialogChrome({ title, onClose, children, width = 360 }: Auth
               cursor: 'default',
             }}
           >
-            <X size={10} color="black" />
+            <X size={10} />
           </button>
         </div>
         <div style={{ padding: '14px' }}>{children}</div>

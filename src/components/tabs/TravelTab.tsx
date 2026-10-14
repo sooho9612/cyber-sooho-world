@@ -50,7 +50,7 @@ function Combobox({
           onClick={() => setIsOpen(!isOpen)}
           className="w-[18px] h-full bg-[#c0c0c0] border-2 border-[outset] border-[#dfdfdf] flex items-center justify-center active:border-[inset]"
         >
-          <ChevronDown size={10} color="black" />
+          <ChevronDown size={10} />
         </button>
       </div>
 

@@ -9,13 +9,14 @@ import { ControlPanel } from './components/Layout/ControlPanel';
 import { AutoCompressorDialog } from './components/Layout/AutoCompressorDialog';
 import { HelpAboutDialog } from './components/Layout/HelpAboutDialog';
 import { MarqueeSettingsDialog } from './components/Layout/MarqueeSettingsDialog';
+import { PlazaSettingsDialog } from './components/Layout/PlazaSettingsDialog';
 import { LoginDialog } from './components/Layout/LoginDialog';
 import { SignupDialog } from './components/Layout/SignupDialog';
 import { AccountDialog } from './components/Layout/AccountDialog';
 import { ForgotPasswordDialog } from './components/Layout/ForgotPasswordDialog';
 import { MarqueeBanner } from './components/MarqueeBanner';
 import { KeepAlivePanels } from './components/shared/KeepAlivePanels';
-import { IntroTab } from './components/tabs/IntroTab';
+import { PlazaTab } from './components/tabs/PlazaTab';
 import { HomeTab } from './components/tabs/HomeTab';
 import { DiaryTab } from './components/tabs/DiaryTab';
 import { FoodTab } from './components/tabs/FoodTab';
@@ -28,6 +29,7 @@ import { ASSETS } from './config/assets';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { useDesktopBackground } from './hooks/useDesktopBackground';
 import { useMarqueeSettings } from './hooks/useMarqueeSettings';
+import { usePlazaSettings } from './hooks/usePlazaSettings';
 import { useAuthContext } from './context/AuthContext';
 import { loadCompressorSettings } from './utils/imageCompressor';
 import { classicAlert } from './lib/messageBox';
@@ -40,11 +42,13 @@ function App() {
   const auth = useAuthContext();
   const desktop = useDesktopBackground(auth.user?.id, auth.profile?.nickname);
   const marquee = useMarqueeSettings();
+  const plaza = usePlazaSettings();
   const [activeTab, setActiveTab] = useState<AppTab>('intro');
   const [showSettings, setShowSettings] = useState(false);
   const [showControlPanel, setShowControlPanel] = useState(false);
   const [showCompressor, setShowCompressor] = useState(false);
   const [showMarqueeSettings, setShowMarqueeSettings] = useState(false);
+  const [showPlazaSettings, setShowPlazaSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
@@ -150,7 +154,7 @@ function App() {
             active={activeTab}
             keys={['intro', 'home', 'diary', 'food', 'guestbook', 'music', 'movie', 'travel', 'toy']}
             panels={{
-              intro: <IntroTab />,
+              intro: <PlazaTab onRequestLogin={openLogin} bgUrl={plaza.bgUrl} />,
               home: <HomeTab onRequestLogin={openLogin} />,
               diary: <DiaryTab />,
               food: <FoodTab />,
@@ -201,6 +205,7 @@ function App() {
           onClose={() => setShowControlPanel(false)}
           onOpenCompressor={() => setShowCompressor(true)}
           onOpenMarquee={() => setShowMarqueeSettings(true)}
+          onOpenPlaza={() => setShowPlazaSettings(true)}
         />
 
         <AutoCompressorDialog
@@ -213,6 +218,13 @@ function App() {
           draft={marquee.settings}
           onClose={() => setShowMarqueeSettings(false)}
           onSave={marquee.save}
+        />
+
+        <PlazaSettingsDialog
+          open={showPlazaSettings}
+          draft={plaza.settings}
+          onClose={() => setShowPlazaSettings(false)}
+          onSave={plaza.save}
         />
 
         <HelpAboutDialog open={showHelp} onClose={() => setShowHelp(false)} />

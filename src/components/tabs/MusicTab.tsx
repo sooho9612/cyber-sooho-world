@@ -250,7 +250,7 @@ export function MusicTab({
                     background: '#c0c0c0', border: '1px outset white', cursor: 'pointer', padding: '1px 4px', display: 'flex', alignItems: 'center' 
                   }}
                 >
-                  <CornerUpLeft size={12} color="black" />
+                  <CornerUpLeft size={12} />
                 </button>
               </div>
 
