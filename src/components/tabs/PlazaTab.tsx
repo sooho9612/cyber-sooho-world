@@ -13,12 +13,21 @@ import { useAuthContext } from '../../context/AuthContext';
 import { useLocale } from '../../i18n/LocaleContext';
 import { classicAlert, classicConfirm } from '../../lib/messageBox';
 import {
+  clampBubbleFontZoom,
   layoutPlazaBubbles,
+  plazaStageScale,
+  readBubbleFontZoom,
+  writeBubbleFontZoom,
+  PLAZA_AVATAR_BASE,
+  PLAZA_BUBBLE_FONT_BASE,
+  PLAZA_BUBBLE_FONT_ZOOM_MAX,
+  PLAZA_BUBBLE_FONT_ZOOM_MIN,
+  PLAZA_BUBBLE_FONT_ZOOM_STEP,
   PLAZA_BUBBLE_MAX,
   type BubbleTail,
 } from '../../lib/plazaGeometry';
 import { usePlazaPresence } from '../../hooks/usePlazaPresence';
-import { SECTION_CONTENT_MIN_HEIGHT } from '../shared/KeepAlivePanels';
+import { SECTION_CONTENT_MIN_HEIGHT, SECTION_MIN_H_CLASS } from '../shared/KeepAlivePanels';
 
 const chromeBtn: CSSProperties = {
   background: '#c0c0c0',
@@ -33,7 +42,25 @@ const chromeBtn: CSSProperties = {
   gap: '4px',
 };
 
-function bubbleTailSpans(tail: BubbleTail) {
+const zoomBtn: CSSProperties = {
+  width: '22px',
+  height: '22px',
+  padding: 0,
+  background: '#c0c0c0',
+  border: '2px outset #dfdfdf',
+  fontSize: '14px',
+  fontWeight: 'bold',
+  fontFamily: 'Tahoma, "MS Sans Serif", sans-serif',
+  lineHeight: 1,
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: '#000',
+};
+
+function bubbleTailSpans(tail: BubbleTail, scale: number) {
+  const s = (n: number) => Math.max(2, Math.round(n * scale));
   if (tail === 'bottom') {
     return (
       <>
@@ -42,13 +69,13 @@ function bubbleTailSpans(tail: BubbleTail) {
           style={{
             position: 'absolute',
             left: '50%',
-            bottom: '-10px',
+            bottom: `-${s(10)}px`,
             transform: 'translateX(-50%)',
             width: 0,
             height: 0,
-            borderLeft: '8px solid transparent',
-            borderRight: '8px solid transparent',
-            borderTop: '10px solid #000',
+            borderLeft: `${s(8)}px solid transparent`,
+            borderRight: `${s(8)}px solid transparent`,
+            borderTop: `${s(10)}px solid #000`,
           }}
         />
         <span
@@ -56,13 +83,13 @@ function bubbleTailSpans(tail: BubbleTail) {
           style={{
             position: 'absolute',
             left: '50%',
-            bottom: '-7px',
+            bottom: `-${s(7)}px`,
             transform: 'translateX(-50%)',
             width: 0,
             height: 0,
-            borderLeft: '6px solid transparent',
-            borderRight: '6px solid transparent',
-            borderTop: '8px solid #fff',
+            borderLeft: `${s(6)}px solid transparent`,
+            borderRight: `${s(6)}px solid transparent`,
+            borderTop: `${s(8)}px solid #fff`,
           }}
         />
       </>
@@ -75,28 +102,28 @@ function bubbleTailSpans(tail: BubbleTail) {
           aria-hidden
           style={{
             position: 'absolute',
-            left: '-10px',
+            left: `-${s(10)}px`,
             top: '50%',
             transform: 'translateY(-50%)',
             width: 0,
             height: 0,
-            borderTop: '8px solid transparent',
-            borderBottom: '8px solid transparent',
-            borderRight: '10px solid #000',
+            borderTop: `${s(8)}px solid transparent`,
+            borderBottom: `${s(8)}px solid transparent`,
+            borderRight: `${s(10)}px solid #000`,
           }}
         />
         <span
           aria-hidden
           style={{
             position: 'absolute',
-            left: '-7px',
+            left: `-${s(7)}px`,
             top: '50%',
             transform: 'translateY(-50%)',
             width: 0,
             height: 0,
-            borderTop: '6px solid transparent',
-            borderBottom: '6px solid transparent',
-            borderRight: '8px solid #fff',
+            borderTop: `${s(6)}px solid transparent`,
+            borderBottom: `${s(6)}px solid transparent`,
+            borderRight: `${s(8)}px solid #fff`,
           }}
         />
       </>
@@ -108,28 +135,28 @@ function bubbleTailSpans(tail: BubbleTail) {
         aria-hidden
         style={{
           position: 'absolute',
-          right: '-10px',
+          right: `-${s(10)}px`,
           top: '50%',
           transform: 'translateY(-50%)',
           width: 0,
           height: 0,
-          borderTop: '8px solid transparent',
-          borderBottom: '8px solid transparent',
-          borderLeft: '10px solid #000',
+          borderTop: `${s(8)}px solid transparent`,
+          borderBottom: `${s(8)}px solid transparent`,
+          borderLeft: `${s(10)}px solid #000`,
         }}
       />
       <span
         aria-hidden
         style={{
           position: 'absolute',
-          right: '-7px',
+          right: `-${s(7)}px`,
           top: '50%',
           transform: 'translateY(-50%)',
           width: 0,
           height: 0,
-          borderTop: '6px solid transparent',
-          borderBottom: '6px solid transparent',
-          borderLeft: '8px solid #fff',
+          borderTop: `${s(6)}px solid transparent`,
+          borderBottom: `${s(6)}px solid transparent`,
+          borderLeft: `${s(8)}px solid #fff`,
         }}
       />
     </>
@@ -154,6 +181,7 @@ export function PlazaTab({ onRequestLogin, bgUrl }: PlazaTabProps) {
   const [bubbleDraft, setBubbleDraft] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [bubbleFontZoom, setBubbleFontZoom] = useState(() => readBubbleFontZoom());
 
   const plaza = usePlazaPresence({
     userId: auth.user?.id,
@@ -193,6 +221,14 @@ export function PlazaTab({ onRequestLogin, bgUrl }: PlazaTabProps) {
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
   }, [selectedId]);
 
+  const stageScale = plazaStageScale(stageSize.w);
+  const avatarPx = Math.max(20, Math.round(PLAZA_AVATAR_BASE * stageScale));
+  const bubbleFontPx = Math.max(
+    8,
+    Math.round(PLAZA_BUBBLE_FONT_BASE * stageScale * bubbleFontZoom)
+  );
+  const bubbleUiScale = (PLAZA_BUBBLE_FONT_BASE * stageScale * bubbleFontZoom) / PLAZA_BUBBLE_FONT_BASE;
+
   const bubbleLayouts = useMemo(() => {
     const withText = plaza.list.filter((p) => p.bubble_text && p.bubble_text.trim());
     return layoutPlazaBubbles(
@@ -203,9 +239,16 @@ export function PlazaTab({ onRequestLogin, bgUrl }: PlazaTabProps) {
         text: p.bubble_text!.trim(),
       })),
       stageSize.w,
-      stageSize.h
+      stageSize.h,
+      { avatarPx, bubbleFontPx }
     );
-  }, [plaza.list, stageSize.h, stageSize.w]);
+  }, [avatarPx, bubbleFontPx, plaza.list, stageSize.h, stageSize.w]);
+
+  const bumpBubbleFont = (dir: 1 | -1) => {
+    setBubbleFontZoom((prev) =>
+      writeBubbleFontZoom(clampBubbleFontZoom(prev + dir * PLAZA_BUBBLE_FONT_ZOOM_STEP))
+    );
+  };
 
   const layoutById = useMemo(() => {
     const m = new Map(bubbleLayouts.map((b) => [b.id, b]));
@@ -294,6 +337,7 @@ export function PlazaTab({ onRequestLogin, bgUrl }: PlazaTabProps) {
 
   return (
     <div
+      className={SECTION_MIN_H_CLASS}
       style={{
         background: 'transparent',
         border: 'none',
@@ -375,10 +419,10 @@ export function PlazaTab({ onRequestLogin, bgUrl }: PlazaTabProps) {
                     style={{
                       position: 'relative',
                       background: '#fff',
-                      border: '2px solid #000',
-                      boxShadow: '2px 2px 0 #808080',
-                      padding: '4px 8px',
-                      fontSize: '16px',
+                      border: `${Math.max(1, Math.round(2 * bubbleUiScale))}px solid #000`,
+                      boxShadow: `${Math.max(1, Math.round(2 * bubbleUiScale))}px ${Math.max(1, Math.round(2 * bubbleUiScale))}px 0 #808080`,
+                      padding: `${Math.max(2, Math.round(4 * bubbleUiScale))}px ${Math.max(3, Math.round(8 * bubbleUiScale))}px`,
+                      fontSize: `${bubbleFontPx}px`,
                       lineHeight: 1.3,
                       color: '#000',
                       wordBreak: 'break-word',
@@ -387,7 +431,7 @@ export function PlazaTab({ onRequestLogin, bgUrl }: PlazaTabProps) {
                     }}
                   >
                     {p.bubble_text}
-                    {bubbleTailSpans(bubble.tail)}
+                    {bubbleTailSpans(bubble.tail, bubbleUiScale)}
                   </div>
                 </div>
               )}
@@ -409,19 +453,19 @@ export function PlazaTab({ onRequestLogin, bgUrl }: PlazaTabProps) {
                   border: isSelected ? '1px dotted #ffff00' : '1px solid transparent',
                   padding: 0,
                   cursor: 'pointer',
-                  width: 48,
-                  height: 48,
+                  width: avatarPx,
+                  height: avatarPx,
                 }}
               >
                 <img
                   src={ASSETS.plazaAvatar}
                   alt=""
-                  width={48}
-                  height={48}
+                  width={avatarPx}
+                  height={avatarPx}
                   draggable={false}
                   style={{
-                    width: 48,
-                    height: 48,
+                    width: avatarPx,
+                    height: avatarPx,
                     imageRendering: 'pixelated',
                     display: 'block',
                   }}
@@ -432,13 +476,13 @@ export function PlazaTab({ onRequestLogin, bgUrl }: PlazaTabProps) {
                     top: '100%',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    marginTop: '2px',
-                    fontSize: '15px',
+                    marginTop: `${Math.max(1, Math.round(2 * stageScale))}px`,
+                    fontSize: `${Math.max(10, Math.round(15 * stageScale))}px`,
                     color: '#fff',
                     textShadow: '1px 1px 0 #000',
                     background: isMine ? '#000080' : 'rgba(0,0,0,0.55)',
-                    padding: '1px 4px',
-                    maxWidth: '90px',
+                    padding: `${Math.max(1, Math.round(1 * stageScale))}px ${Math.max(2, Math.round(4 * stageScale))}px`,
+                    maxWidth: `${Math.round(90 * stageScale)}px`,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
@@ -453,6 +497,41 @@ export function PlazaTab({ onRequestLogin, bgUrl }: PlazaTabProps) {
             </div>
           );
         })}
+
+        <div
+          style={{
+            position: 'absolute',
+            left: '4px',
+            bottom: '4px',
+            zIndex: 6000,
+            display: 'flex',
+            gap: '3px',
+            lineHeight: 'normal',
+          }}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            style={zoomBtn}
+            title={t('plaza.fontSmaller')}
+            aria-label={t('plaza.fontSmaller')}
+            disabled={bubbleFontZoom <= PLAZA_BUBBLE_FONT_ZOOM_MIN + 1e-6}
+            onClick={() => bumpBubbleFont(-1)}
+          >
+            −
+          </button>
+          <button
+            type="button"
+            style={zoomBtn}
+            title={t('plaza.fontLarger')}
+            aria-label={t('plaza.fontLarger')}
+            disabled={bubbleFontZoom >= PLAZA_BUBBLE_FONT_ZOOM_MAX - 1e-6}
+            onClick={() => bumpBubbleFont(1)}
+          >
+            +
+          </button>
+        </div>
       </div>
 
       {auth.isLoggedIn && (

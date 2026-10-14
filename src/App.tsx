@@ -104,6 +104,16 @@ function App() {
           button:hover { background: #000080 !important; color: white !important; }
           @media (min-width: 801px) { .diary-grid { grid-template-columns: repeat(3, 1fr) !important; } }
           @media (max-width: 800px) { .diary-grid { grid-template-columns: 1fr !important; } }
+          /* Mobile: side padding → 30% of desktop 24px (~7px); drop tall content floor */
+          @media (max-width: 768px) {
+            .content-area {
+              padding-left: 7px !important;
+              padding-right: 7px !important;
+              padding-bottom: 8px !important;
+            }
+            .section-min-h { min-height: 0 !important; }
+            .site-footer { margin-top: 8px !important; }
+          }
           .tab-container { display: flex; gap: 5px; }
           .tab-button { flex: 1; min-width: 0; padding: 10px 20px; fontSize: 14px; white-space: nowrap; }
           .sub-tab-container { display: flex; gap: 0px; margin-bottom: 20px; }
@@ -181,7 +191,10 @@ function App() {
             }}
           />
 
-          <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '12px', color: '#ffff00' }}>
+          <div
+            className="site-footer"
+            style={{ marginTop: '20px', textAlign: 'center', fontSize: '12px', color: '#ffff00' }}
+          >
             <p>~*~ since 2025.12.04 ~*~</p>
             <p>{t('footer.ie')}</p>
           </div>

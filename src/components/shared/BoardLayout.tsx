@@ -11,7 +11,7 @@ import {
 import { useAuthContext } from '../../context/AuthContext';
 import { classicAlert, classicConfirm } from '../../lib/messageBox';
 import { useLocale } from '../../i18n/LocaleContext';
-import { SECTION_CONTENT_MIN_HEIGHT } from './KeepAlivePanels';
+import { SECTION_CONTENT_MIN_HEIGHT, SECTION_MIN_H_CLASS } from './KeepAlivePanels';
 
 type BoardItem = { id: string | number };
 
@@ -553,7 +553,7 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
       </div>
 
       {/* 2. 리스트 영역 — min-height로 탭 전환 시 높이 점프 완화 */}
-      <div style={{ padding: '0px', minHeight: SECTION_CONTENT_MIN_HEIGHT }}>
+      <div className={SECTION_MIN_H_CLASS} style={{ padding: '0px', minHeight: SECTION_CONTENT_MIN_HEIGHT }}>
         {isLoading ? (
           <div style={{ position: 'relative' }}>
             <div className={`grid ${isSmallView ? 'grid-cols-2 gap-2' : `${gridCols} gap-4`}`}>
@@ -585,6 +585,7 @@ export function BoardLayout<T extends BoardItem = BoardItem>({
           </div>
         ) : items.length === 0 ? (
           <div
+            className={SECTION_MIN_H_CLASS}
             style={{
               minHeight: SECTION_CONTENT_MIN_HEIGHT,
               display: 'flex',

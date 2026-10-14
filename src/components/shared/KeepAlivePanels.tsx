@@ -1,7 +1,13 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 
-/** Shared content-shell floor so tab switches don't collapse the classic window */
+/**
+ * Shared content-shell floor so tab switches don't collapse the classic window (desktop).
+ * Mobile clears this via `.section-min-h` in App styles — avoid a tall empty teal gap.
+ */
 export const SECTION_CONTENT_MIN_HEIGHT = 520;
+
+/** Apply with `minHeight: SECTION_CONTENT_MIN_HEIGHT` so mobile CSS can override */
+export const SECTION_MIN_H_CLASS = 'section-min-h';
 
 type KeepAlivePanelsProps<T extends string> = {
   active: T;
@@ -37,7 +43,7 @@ export function KeepAlivePanels<T extends string>({
 
   return (
     <div
-      className={className}
+      className={[SECTION_MIN_H_CLASS, className].filter(Boolean).join(' ')}
       style={{
         minHeight: SECTION_CONTENT_MIN_HEIGHT,
         ...style,

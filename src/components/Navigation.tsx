@@ -59,10 +59,9 @@ export function Navigation({ activeTab, onTabChange, isPlaying }: NavigationProp
           background: '#c0c0c0',
           border: '3px outset #dfdfdf',
           padding: '4px',
-          marginBottom: '20px',
           maxWidth: '400px',
           width: '100%',
-          margin: '0 auto 20px auto',
+          margin: '0 auto 8px auto',
           boxSizing: 'border-box',
           gap: '2px',
         }}

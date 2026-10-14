@@ -20,7 +20,7 @@ export function MarqueeBanner({ settings }: MarqueeBannerProps) {
       className="marquee-banner"
       style={{
         width: '100%',
-        marginBottom: '10px',
+        marginBottom: '8px',
         border: '2px inset #808080',
         background: settings.backgroundColor,
         color: rainbow ? undefined : settings.textColor,

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Save, Edit2, X, Trash2, Image as ImageIcon, ArrowUp, ArrowDown, Upload, Layout } from 'lucide-react';
 import { BoardLayout } from '../shared/BoardLayout';
-import { KeepAlivePanels, SECTION_CONTENT_MIN_HEIGHT } from '../shared/KeepAlivePanels';
+import { KeepAlivePanels, SECTION_CONTENT_MIN_HEIGHT, SECTION_MIN_H_CLASS } from '../shared/KeepAlivePanels';
 import { compressImage } from '../../utils/imageCompressor';
 import { DiaryEntry, MemoryPhoto } from '../../types';
 import { useLocale } from '../../i18n/LocaleContext';
@@ -466,7 +466,7 @@ export function DiaryTab() {
         ))}
       </div>
 
-      <div style={{ background: '#c0c0c0', border: '2px outset #dfdfdf', borderTop: '2px solid white', padding: '20px', minHeight: SECTION_CONTENT_MIN_HEIGHT, position: 'relative', zIndex: 5 }}>
+      <div className={SECTION_MIN_H_CLASS} style={{ background: '#c0c0c0', border: '2px outset #dfdfdf', borderTop: '2px solid white', padding: '20px', minHeight: SECTION_CONTENT_MIN_HEIGHT, position: 'relative', zIndex: 5 }}>
         <KeepAlivePanels
           active={activeSubTab}
           keys={['entries', 'food', 'movie', 'travel', 'memory']}

@@ -3,7 +3,8 @@ import { ASSETS } from '../../config/assets';
 
 const WINDOW_WIDTH = 'max-w-[800px]';
 /** Floor height so classic window doesn't collapse when switching short/tall tabs */
-const WINDOW_MIN_HEIGHT = 'min-h-[640px]';
+/** Desktop floor only — mobile drops this so plaza doesn't leave a huge teal gap */
+const WINDOW_MIN_HEIGHT = 'min-h-0 md:min-h-[640px]';
 
 interface WindowFrameProps {
   children: ReactNode;

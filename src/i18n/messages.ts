@@ -146,6 +146,9 @@ const ko = {
   'home.days': '일,월,화,수,목,금,토',
 
   // control / settings / help
+  'banner.title': 'sooho.love',
+  'banner.tagline': 'missing scent of humans',
+  'banner.aria': '홈(광장)으로 이동',
   'panel.control': '제어판',
   'panel.marquee': '현수막',
   'panel.compressor': 'Auto Compressor',
@@ -186,6 +189,8 @@ const ko = {
   'plaza.settingsBg': '배경',
   'plaza.bg.classic': '기본',
   'plaza.bg.halloween': '할로윈',
+  'plaza.fontSmaller': '말풍선 글자 작게',
+  'plaza.fontLarger': '말풍선 글자 크게',
 
   // toys
   'toy.myComputer': '내컴퓨터',
@@ -325,6 +330,9 @@ const en: Record<MessageKey, string> = {
   'home.loginToComment': 'Log in to leave a comment.',
   'home.days': 'Sun,Mon,Tue,Wed,Thu,Fri,Sat',
 
+  'banner.title': 'sooho.love',
+  'banner.tagline': 'missing scent of humans',
+  'banner.aria': 'Go to home (plaza)',
   'panel.control': 'Control Panel',
   'panel.marquee': 'Marquee',
   'panel.compressor': 'Auto Compressor',
@@ -364,6 +372,8 @@ const en: Record<MessageKey, string> = {
   'plaza.settingsBg': 'Background',
   'plaza.bg.classic': 'Classic',
   'plaza.bg.halloween': 'Halloween',
+  'plaza.fontSmaller': 'Smaller bubble text',
+  'plaza.fontLarger': 'Larger bubble text',
 
   'toy.myComputer': 'My Computer',
   'toy.ie': 'Internet Explorer',

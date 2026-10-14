@@ -35,7 +35,7 @@ export const ASSETS = {
   toyRecycle: storageUrl('Image/toybox/recyclebin.png'),
   /** Plaza stage — swap avatar_stand.png later without code changes */
   plazaBg: `${import.meta.env.BASE_URL}plaza/plaza_bg.png`,
-  plazaBgHalloween: `${import.meta.env.BASE_URL}plaza/plaza_bg_halloween.png`,
+  plazaBgHalloween: `${import.meta.env.BASE_URL}plaza/plaza_bg_halloween.gif`,
   plazaAvatar: `${import.meta.env.BASE_URL}plaza/avatar_stand.png?v=2`,
 } as const;
 
